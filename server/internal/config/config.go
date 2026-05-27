@@ -2,7 +2,6 @@ package config
 
 import (
 	"errors"
-	"log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -15,34 +14,34 @@ type Config struct {
 	JWTRefreshSecret string
 }
 
-func LoadConfig() *Config {
+func LoadConfig() (*Config, error) {
 	godotenv.Load()
 
 	DBUrl, err := ExtractEnvKey("DATABASE_URL", "")
 	if err != nil {
 		if errors.Is(err, ErrEnvironmentVariableNotFound) {
-			log.Fatal("dburl env value not found")
+			return nil, errors.New("dburl env value not found")
 		}
 	}
 
 	Port, err := ExtractEnvKey("PORT", "6060")
 	if err != nil {
 		if errors.Is(err, ErrEnvironmentVariableNotFound) {
-			log.Fatal("port env value not found")
+			return nil, errors.New("port env value not found")
 		}
 	}
 
 	JWTAccessSecret, err := ExtractEnvKey("JWT_ACCESS_SECRET", "")
 	if err != nil {
 		if errors.Is(err, ErrEnvironmentVariableNotFound) {
-			log.Fatal("jwt access secret env value not found")
+			return nil, errors.New("jwt access secret env value not found")
 		}
 	}
 
 	JWTRefreshSecret, err := ExtractEnvKey("JWT_REFRESH_SECRET", "")
 	if err != nil {
 		if errors.Is(err, ErrEnvironmentVariableNotFound) {
-			log.Fatal("jwt refresh secret env value not found")
+			return nil, errors.New("jwt refresh secret env value not found")
 		}
 	}
 
@@ -51,7 +50,7 @@ func LoadConfig() *Config {
 		Port:             Port,
 		JWTAccessSecret:  JWTAccessSecret,
 		JWTRefreshSecret: JWTRefreshSecret,
-	}
+	}, nil
 
 }
 
