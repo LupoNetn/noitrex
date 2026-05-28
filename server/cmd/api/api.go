@@ -12,6 +12,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/luponetn/noitrex/internal/auth"
+	"github.com/luponetn/noitrex/internal/db"
+	operator "github.com/luponetn/noitrex/internal/operators"
 )
 
 func CreateRouter() *gin.Engine {
@@ -20,7 +23,7 @@ func CreateRouter() *gin.Engine {
 	return router
 }
 
-func CreateRoutes(router *gin.Engine) {
+func CreateRoutes(router *gin.Engine, queries *db.Queries) {
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status":  "ok",
@@ -28,6 +31,13 @@ func CreateRoutes(router *gin.Engine) {
 		})
 	})
 
+	operatorService := operator.NewService(queries)
+	operatorHandler := operator.NewHandler(operatorService)
+	operator.NewRouter(router, operatorHandler)
+
+	authService := auth.NewService(queries)
+	authHandler := auth.NewHandler(authService)
+	auth.NewRouter(router, authHandler)
 }
 
 func StartupServer(router *gin.Engine, port string) error {

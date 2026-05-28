@@ -34,6 +34,8 @@ func main() {
 
 	router := CreateRouter()
 
+	CreateRoutes(router, queries)
+
 	app := &App{
 		Cfg:    cfg,
 		Router: router,
