@@ -30,6 +30,8 @@ func main() {
 	}
 	defer dbPool.Close()
 
+	queries := db.New(dbPool)
+
 	router := CreateRouter()
 
 	app := &App{
