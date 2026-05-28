@@ -11,10 +11,10 @@ type Service interface {
 }
 
 type Svc struct {
-	db *db.Queries
+	db db.Querier
 }
 
-func NewService(db *db.Queries) Service {
+func NewService(db db.Querier) Service {
 	return &Svc{
 		db: db,
 	}

@@ -23,7 +23,7 @@ func CreateRouter() *gin.Engine {
 	return router
 }
 
-func CreateRoutes(router *gin.Engine, queries *db.Queries) {
+func CreateRoutes(router *gin.Engine, queries db.Querier) {
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status":  "ok",
