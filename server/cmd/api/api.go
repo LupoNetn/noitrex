@@ -23,7 +23,7 @@ func CreateRouter() *gin.Engine {
 	return router
 }
 
-func CreateRoutes(router *gin.Engine, queries db.Querier) {
+func CreateRoutes(router *gin.Engine, queries db.Querier, JWTAccessSecret, JWTRefreshSecret string) {
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status":  "ok",
@@ -35,7 +35,7 @@ func CreateRoutes(router *gin.Engine, queries db.Querier) {
 	operatorHandler := operator.NewHandler(operatorService)
 	operator.NewRouter(router, operatorHandler)
 
-	authService := auth.NewService(queries)
+	authService := auth.NewService(queries, JWTAccessSecret, JWTRefreshSecret)
 	authHandler := auth.NewHandler(authService)
 	auth.NewRouter(router, authHandler)
 }

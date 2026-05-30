@@ -12,7 +12,12 @@ import (
 
 type Querier interface {
 	CreateOperator(ctx context.Context, arg CreateOperatorParams) (Operator, error)
+	DeleteOperator(ctx context.Context, id pgtype.UUID) error
 	GetOperator(ctx context.Context, id pgtype.UUID) (Operator, error)
+	GetOperatorByEmail(ctx context.Context, supportEmail pgtype.Text) (Operator, error)
+	ListOperators(ctx context.Context) ([]Operator, error)
+	UpdateOperator(ctx context.Context, arg UpdateOperatorParams) (Operator, error)
+	UpdateOperatorStatus(ctx context.Context, arg UpdateOperatorStatusParams) error
 }
 
 var _ Querier = (*Queries)(nil)

@@ -12,35 +12,45 @@ import (
 )
 
 const createOperator = `-- name: CreateOperator :one
-INSERT INTO operators 
-(name, description, status, api_key_hash, webhook_secret, support_email, website_url, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, name, description, logo_url, api_key_hash, webhook_secret, support_email, website_url, status, created_at, updated_at
+INSERT INTO operators (
+    name, 
+    description, 
+    logo_url, 
+    api_key_hash, 
+    webhook_secret, 
+    support_email, 
+    website_url, 
+    status, 
+    password_hash
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9
+)
+RETURNING id, name, description, logo_url, api_key_hash, webhook_secret, support_email, website_url, status, created_at, updated_at, password_hash
 `
 
 type CreateOperatorParams struct {
-	Name          string             `json:"name"`
-	Description   pgtype.Text        `json:"description"`
-	Status        OperatingStatus    `json:"status"`
-	ApiKeyHash    string             `json:"api_key_hash"`
-	WebhookSecret string             `json:"webhook_secret"`
-	SupportEmail  pgtype.Text        `json:"support_email"`
-	WebsiteUrl    pgtype.Text        `json:"website_url"`
-	CreatedAt     pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	Name          string          `json:"name"`
+	Description   pgtype.Text     `json:"description"`
+	LogoUrl       pgtype.Text     `json:"logo_url"`
+	ApiKeyHash    string          `json:"api_key_hash"`
+	WebhookSecret string          `json:"webhook_secret"`
+	SupportEmail  pgtype.Text     `json:"support_email"`
+	WebsiteUrl    pgtype.Text     `json:"website_url"`
+	Status        OperatingStatus `json:"status"`
+	PasswordHash  pgtype.Text     `json:"password_hash"`
 }
 
 func (q *Queries) CreateOperator(ctx context.Context, arg CreateOperatorParams) (Operator, error) {
 	row := q.db.QueryRow(ctx, createOperator,
 		arg.Name,
 		arg.Description,
-		arg.Status,
+		arg.LogoUrl,
 		arg.ApiKeyHash,
 		arg.WebhookSecret,
 		arg.SupportEmail,
 		arg.WebsiteUrl,
-		arg.CreatedAt,
-		arg.UpdatedAt,
+		arg.Status,
+		arg.PasswordHash,
 	)
 	var i Operator
 	err := row.Scan(
@@ -55,12 +65,22 @@ func (q *Queries) CreateOperator(ctx context.Context, arg CreateOperatorParams) 
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.PasswordHash,
 	)
 	return i, err
 }
 
+const deleteOperator = `-- name: DeleteOperator :exec
+DELETE FROM operators WHERE id = $1
+`
+
+func (q *Queries) DeleteOperator(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteOperator, id)
+	return err
+}
+
 const getOperator = `-- name: GetOperator :one
-SELECT id, name, description, logo_url, api_key_hash, webhook_secret, support_email, website_url, status, created_at, updated_at FROM operators WHERE id = $1
+SELECT id, name, description, logo_url, api_key_hash, webhook_secret, support_email, website_url, status, created_at, updated_at, password_hash FROM operators WHERE id = $1
 `
 
 func (q *Queries) GetOperator(ctx context.Context, id pgtype.UUID) (Operator, error) {
@@ -78,6 +98,136 @@ func (q *Queries) GetOperator(ctx context.Context, id pgtype.UUID) (Operator, er
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.PasswordHash,
 	)
 	return i, err
+}
+
+const getOperatorByEmail = `-- name: GetOperatorByEmail :one
+SELECT id, name, description, logo_url, api_key_hash, webhook_secret, support_email, website_url, status, created_at, updated_at, password_hash FROM operators WHERE support_email = $1
+`
+
+func (q *Queries) GetOperatorByEmail(ctx context.Context, supportEmail pgtype.Text) (Operator, error) {
+	row := q.db.QueryRow(ctx, getOperatorByEmail, supportEmail)
+	var i Operator
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.LogoUrl,
+		&i.ApiKeyHash,
+		&i.WebhookSecret,
+		&i.SupportEmail,
+		&i.WebsiteUrl,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.PasswordHash,
+	)
+	return i, err
+}
+
+const listOperators = `-- name: ListOperators :many
+SELECT id, name, description, logo_url, api_key_hash, webhook_secret, support_email, website_url, status, created_at, updated_at, password_hash FROM operators ORDER BY created_at DESC
+`
+
+func (q *Queries) ListOperators(ctx context.Context) ([]Operator, error) {
+	rows, err := q.db.Query(ctx, listOperators)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Operator
+	for rows.Next() {
+		var i Operator
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.LogoUrl,
+			&i.ApiKeyHash,
+			&i.WebhookSecret,
+			&i.SupportEmail,
+			&i.WebsiteUrl,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.PasswordHash,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateOperator = `-- name: UpdateOperator :one
+UPDATE operators
+SET 
+    name = COALESCE($2, name),
+    description = COALESCE($3, description),
+    logo_url = COALESCE($4, logo_url),
+    support_email = COALESCE($5, support_email),
+    website_url = COALESCE($6, website_url),
+    password_hash = COALESCE($7, password_hash),
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, name, description, logo_url, api_key_hash, webhook_secret, support_email, website_url, status, created_at, updated_at, password_hash
+`
+
+type UpdateOperatorParams struct {
+	ID           pgtype.UUID `json:"id"`
+	Name         string      `json:"name"`
+	Description  pgtype.Text `json:"description"`
+	LogoUrl      pgtype.Text `json:"logo_url"`
+	SupportEmail pgtype.Text `json:"support_email"`
+	WebsiteUrl   pgtype.Text `json:"website_url"`
+	PasswordHash pgtype.Text `json:"password_hash"`
+}
+
+func (q *Queries) UpdateOperator(ctx context.Context, arg UpdateOperatorParams) (Operator, error) {
+	row := q.db.QueryRow(ctx, updateOperator,
+		arg.ID,
+		arg.Name,
+		arg.Description,
+		arg.LogoUrl,
+		arg.SupportEmail,
+		arg.WebsiteUrl,
+		arg.PasswordHash,
+	)
+	var i Operator
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.LogoUrl,
+		&i.ApiKeyHash,
+		&i.WebhookSecret,
+		&i.SupportEmail,
+		&i.WebsiteUrl,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.PasswordHash,
+	)
+	return i, err
+}
+
+const updateOperatorStatus = `-- name: UpdateOperatorStatus :exec
+UPDATE operators
+SET status = $2, updated_at = NOW()
+WHERE id = $1
+`
+
+type UpdateOperatorStatusParams struct {
+	ID     pgtype.UUID     `json:"id"`
+	Status OperatingStatus `json:"status"`
+}
+
+func (q *Queries) UpdateOperatorStatus(ctx context.Context, arg UpdateOperatorStatusParams) error {
+	_, err := q.db.Exec(ctx, updateOperatorStatus, arg.ID, arg.Status)
+	return err
 }

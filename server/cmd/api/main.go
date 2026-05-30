@@ -34,7 +34,7 @@ func main() {
 
 	router := CreateRouter()
 
-	CreateRoutes(router, queries)
+	CreateRoutes(router, queries, cfg.JWTAccessSecret, cfg.JWTRefreshSecret)
 
 	app := &App{
 		Cfg:    cfg,

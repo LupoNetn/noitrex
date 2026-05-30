@@ -53,6 +53,50 @@ func (ns NullBillingPeriodType) Value() (driver.Value, error) {
 	return string(ns.BillingPeriodType), nil
 }
 
+type InvoiceStatus string
+
+const (
+	InvoiceStatusDraft  InvoiceStatus = "draft"
+	InvoiceStatusIssued InvoiceStatus = "issued"
+	InvoiceStatusPaid   InvoiceStatus = "paid"
+	InvoiceStatusVoid   InvoiceStatus = "void"
+)
+
+func (e *InvoiceStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = InvoiceStatus(s)
+	case string:
+		*e = InvoiceStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for InvoiceStatus: %T", src)
+	}
+	return nil
+}
+
+type NullInvoiceStatus struct {
+	InvoiceStatus InvoiceStatus `json:"invoice_status"`
+	Valid         bool          `json:"valid"` // Valid is true if InvoiceStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullInvoiceStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.InvoiceStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.InvoiceStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullInvoiceStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.InvoiceStatus), nil
+}
+
 type OperatingStatus string
 
 const (
@@ -151,6 +195,18 @@ type Customer struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
+type Invoice struct {
+	ID          pgtype.UUID        `json:"id"`
+	OperatorID  pgtype.UUID        `json:"operator_id"`
+	CustomerID  pgtype.UUID        `json:"customer_id"`
+	AmountCents int64              `json:"amount_cents"`
+	Status      InvoiceStatus      `json:"status"`
+	PeriodStart pgtype.Timestamptz `json:"period_start"`
+	PeriodEnd   pgtype.Timestamptz `json:"period_end"`
+	LineItems   []byte             `json:"line_items"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
 type Operator struct {
 	ID            pgtype.UUID        `json:"id"`
 	Name          string             `json:"name"`
@@ -163,6 +219,7 @@ type Operator struct {
 	Status        OperatingStatus    `json:"status"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	PasswordHash  pgtype.Text        `json:"password_hash"`
 }
 
 type Plan struct {
@@ -178,9 +235,45 @@ type Plan struct {
 }
 
 type UsageEvent struct {
-	ID             pgtype.UUID `json:"id"`
-	CustomerID     pgtype.UUID `json:"customer_id"`
-	OperatorID     pgtype.UUID `json:"operator_id"`
-	EventName      string      `json:"event_name"`
-	IdempotencyKey string      `json:"idempotency_key"`
+	ID             pgtype.UUID        `json:"id"`
+	CustomerID     pgtype.UUID        `json:"customer_id"`
+	OperatorID     pgtype.UUID        `json:"operator_id"`
+	EventName      string             `json:"event_name"`
+	Quantity       int64              `json:"quantity"`
+	IdempotencyKey string             `json:"idempotency_key"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+}
+
+type UserAggregate struct {
+	ID          pgtype.UUID        `json:"id"`
+	OperatorID  pgtype.UUID        `json:"operator_id"`
+	CustomerID  pgtype.UUID        `json:"customer_id"`
+	EventName   string             `json:"event_name"`
+	PeriodStart pgtype.Timestamptz `json:"period_start"`
+	PeriodEnd   pgtype.Timestamptz `json:"period_end"`
+	TotalUnits  int64              `json:"total_units"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type WebhookDelivery struct {
+	ID            pgtype.UUID        `json:"id"`
+	EndpointID    pgtype.UUID        `json:"endpoint_id"`
+	EventType     string             `json:"event_type"`
+	Payload       []byte             `json:"payload"`
+	ResponseCode  pgtype.Int4        `json:"response_code"`
+	ResponseBody  pgtype.Text        `json:"response_body"`
+	AttemptNumber int32              `json:"attempt_number"`
+	DeliveredAt   pgtype.Timestamptz `json:"delivered_at"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+}
+
+type WebhookEndpoint struct {
+	ID            pgtype.UUID        `json:"id"`
+	OperatorID    pgtype.UUID        `json:"operator_id"`
+	Url           string             `json:"url"`
+	SigningSecret string             `json:"signing_secret"`
+	Events        []string           `json:"events"`
+	Active        bool               `json:"active"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 }
