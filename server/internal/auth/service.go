@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/luponetn/noitrex/internal/db"
 	"github.com/luponetn/noitrex/utils"
@@ -38,20 +39,20 @@ func (s *Svc) Login(ctx context.Context, email string, password string) (string,
 	}
 	existingUser, err := s.db.GetOperatorByEmail(ctx, emailTxt)
 	if err != nil {
-		slog.Error("an error occured when trying to fetch operator", "error", err)
 		if errors.Is(err, pgx.ErrNoRows) {
-			return "", "", ErrInvalidCredentials
+			return "", "", ErrInvalidCredentials // normal — no logging needed
 		}
+		slog.Error("unexpected error fetching operator", "error", err)
 		return "", "", err
 	}
 
-	IsPasswordCorrect, err := utils.ComparePasswordHash(password, existingUser.PasswordHash.String)
+	isPasswordCorrect, err := utils.ComparePasswordHash(password, existingUser.PasswordHash.String)
 	if err != nil {
 		slog.Error("Something went wrong when comparing password hash for user:", "user", existingUser.ID)
 		return "", "", ErrInvalidCredentials
 	}
 
-	if !IsPasswordCorrect {
+	if !isPasswordCorrect {
 		slog.Error("Password is incorrect for user:", "user", existingUser.ID)
 		return "", "", ErrInvalidCredentials
 	}
@@ -65,6 +66,9 @@ func (s *Svc) Login(ctx context.Context, email string, password string) (string,
 }
 
 func (s *Svc) CreateOperator(ctx context.Context, args RegisterRequest) (db.Operator, string, string, error) {
+
+	// Note: We removed the GetOperatorByEmail check to prevent a Time-of-Check to Time-of-Use (TOCTOU) race condition.
+	// We now rely on the database's UNIQUE constraint on the email column to enforce uniqueness.
 
 	apiKey, err := utils.GenerateApiKey()
 	if err != nil {
@@ -86,23 +90,27 @@ func (s *Svc) CreateOperator(ctx context.Context, args RegisterRequest) (db.Oper
 
 	// Hash api key and webhook secret for storage.
 	apiKeyHash := utils.HashSecrets(apiKey)
-	webhookSecretHash := utils.HashSecrets(webhookSecret)
 
 	params := db.CreateOperatorParams{
 		Name:          args.Name,
-		Description:   pgtype.Text{String: *args.Description, Valid: true},
-		LogoUrl:       pgtype.Text{String: *args.LogoUrl, Valid: true},
+		Description:   utils.ToPgtypeText(args.Description),
+		LogoUrl:       utils.ToPgtypeText(args.LogoUrl),
 		SupportEmail:  pgtype.Text{String: args.SupportEmail, Valid: true},
-		WebsiteUrl:    pgtype.Text{String: *args.WebsiteUrl, Valid: true},
+		WebsiteUrl:    utils.ToPgtypeText(args.WebsiteUrl),
 		PasswordHash:  pgtype.Text{String: hashedPassword, Valid: true},
 		ApiKeyHash:    apiKeyHash,
-		WebhookSecret: webhookSecretHash,
+		WebhookSecret: webhookSecret,
 		Status:        db.OperatingStatusActive,
 	}
 
 	//create operator
 	operator, err := s.db.CreateOperator(ctx, params)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" { // 23505 is PostgreSQL's unique_violation code
+			slog.Warn("user registration failed: email already exists", "email", args.SupportEmail)
+			return db.Operator{}, "", "", ErrUserAlreadyExists
+		}
 		slog.Error("something went wrong when creating operator", "error", err)
 		return db.Operator{}, "", "", err
 	}

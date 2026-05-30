@@ -47,6 +47,13 @@ func Unauthorized(c *gin.Context) {
 	})
 }
 
+func Conflict(c *gin.Context, err string) {
+	c.JSON(http.StatusConflict, Envelope{
+		Success: false,
+		Error:   err,
+	})
+}
+
 func NotFound(c *gin.Context, resource string) {
 	c.JSON(http.StatusNotFound, Envelope{
 		Success: false,
