@@ -38,9 +38,15 @@ func (h *Handler) HandleLogin(c *gin.Context) {
 		return
 	}
 
+	// Set HttpOnly Cookies
+	// maxAge for access token: 15 minutes = 900 seconds
+	// maxAge for refresh token: 7 days = 604800 seconds
+	// Note: Set 'secure' (second to last boolean) to true in production over HTTPS
+	c.SetCookie("access_token", accessToken, 900, "/", "", false, true)
+	c.SetCookie("refresh_token", refreshToken, 604800, "/auth/refresh", "", false, true)
+
 	utils.OK(c, gin.H{
-		"access_token":  accessToken,
-		"refresh_token": refreshToken,
+		"message": "logged in successfully",
 	})
 }
 
@@ -86,5 +92,42 @@ func (h *Handler) HandleRegister(c *gin.Context) {
 		"operator":       dto,
 		"api_key":        apiKey,
 		"webhook_secret": webhookSecret,
+	})
+}
+
+func (h *Handler) HandleRefresh(c *gin.Context) {
+	refreshToken, err := c.Cookie("refresh_token")
+	if err != nil {
+		slog.Error("Refresh token cookie not found", "error", err.Error())
+		utils.Unauthorized(c)
+		return
+	}
+
+	accessToken, newRefreshToken, err := h.service.Refresh(c.Request.Context(), refreshToken)
+	if err != nil {
+		if errors.Is(err, ErrInvalidToken) {
+			utils.Unauthorized(c)
+			return
+		}
+		slog.Error("Error refreshing token", "error", err.Error())
+		utils.InternalError(c)
+		return
+	}
+
+	c.SetCookie("access_token", accessToken, 900, "/", "", false, true)
+	c.SetCookie("refresh_token", newRefreshToken, 604800, "/auth/refresh", "", false, true)
+
+	utils.OK(c, gin.H{
+		"message": "tokens refreshed successfully",
+	})
+}
+
+func (h *Handler) HandleLogout(c *gin.Context) {
+	// Clear the HttpOnly cookies by setting MaxAge to -1
+	c.SetCookie("access_token", "", -1, "/", "", false, true)
+	c.SetCookie("refresh_token", "", -1, "/auth/refresh", "", false, true)
+
+	utils.OK(c, gin.H{
+		"message": "logged out successfully",
 	})
 }

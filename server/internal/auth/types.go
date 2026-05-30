@@ -5,7 +5,8 @@ import "errors"
 // Errors(Sentinel and Custom Types)
 var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
-	ErrUserAlreadyExists = errors.New("user already exists")
+	ErrUserAlreadyExists  = errors.New("user already exists")
+	ErrInvalidToken       = errors.New("invalid token")
 )
 
 // Request and Response Structures
@@ -22,6 +23,7 @@ type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
 }
+
 
 type OperatorDTO struct {
 	ID           any     `json:"id"`

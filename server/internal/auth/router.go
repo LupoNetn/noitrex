@@ -9,4 +9,6 @@ func NewRouter(router *gin.Engine, h *Handler) {
 
 	authGroup.POST("/login", h.HandleLogin)
 	authGroup.POST("/register", h.HandleRegister)
+	authGroup.POST("/refresh", h.HandleRefresh)
+	authGroup.POST("/logout", h.HandleLogout)
 }

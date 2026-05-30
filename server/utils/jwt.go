@@ -40,11 +40,11 @@ func GenerateJwtPair(JWTAccessSecret string, JWTRefreshSecret string, name strin
 	access := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
 	refresh := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
 
-	accessToken, err := access.SignedString(JWTAccessSecret)
+	accessToken, err := access.SignedString([]byte(JWTAccessSecret))
 	if err != nil {
 		return "", "", err
 	}
-	refreshToken, err := refresh.SignedString(JWTRefreshSecret)
+	refreshToken, err := refresh.SignedString([]byte(JWTRefreshSecret))
 	if err != nil {
 		return "", "", err
 	}
@@ -52,4 +52,22 @@ func GenerateJwtPair(JWTAccessSecret string, JWTRefreshSecret string, name strin
 	return accessToken, refreshToken, nil
 }
 
-func VerifyJwt() {}
+func VerifyJwt(tokenString string, secret string) (*Claims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		// Validate the alg is what we expect
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrSignatureInvalid
+		}
+		return []byte(secret), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, jwt.ErrSignatureInvalid
+}

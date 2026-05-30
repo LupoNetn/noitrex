@@ -15,6 +15,7 @@ import (
 type Service interface {
 	Login(ctx context.Context, email, password string) (string, string, error)
 	CreateOperator(ctx context.Context, args RegisterRequest) (db.Operator, string, string, error)
+	Refresh(ctx context.Context, refreshToken string) (string, string, error)
 }
 
 type Svc struct {
@@ -116,4 +117,20 @@ func (s *Svc) CreateOperator(ctx context.Context, args RegisterRequest) (db.Oper
 	}
 
 	return operator, apiKey, webhookSecret, nil
+}
+
+func (s *Svc) Refresh(ctx context.Context, refreshToken string) (string, string, error) {
+	claims, err := utils.VerifyJwt(refreshToken, s.JWTRefreshSecret)
+	if err != nil {
+		slog.Error("error verifying refresh token", "error", err)
+		return "", "", ErrInvalidToken
+	}
+
+	// Issue a new pair of access and refresh tokens
+	accessToken, newRefreshToken, err := utils.GenerateJwtPair(s.JWTAccessSecret, s.JWTRefreshSecret, claims.Name, claims.OperatorID, claims.Role)
+	if err != nil {
+		slog.Error("something went wrong when generating token pair during refresh", "error", err)
+		return "", "", err
+	}
+	return accessToken, newRefreshToken, nil
 }
