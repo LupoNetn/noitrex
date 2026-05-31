@@ -28,9 +28,16 @@ func (h *Handler) HandleCreateEvent(c *gin.Context) {
 		return
 	}
 
-	operatorID, exists := c.Get("operator_id")
+	operatorID, exists := c.Get("operatorId")
 	if !exists {
 		slog.Error("unathorized access")
+		utils.Unauthorized(c)
+		return
+	}
+
+	var opID pgtype.UUID
+	if err := opID.Scan(operatorID.(string)); err != nil {
+		slog.Error("Invalid operator_id format")
 		utils.Unauthorized(c)
 		return
 	}
@@ -45,7 +52,7 @@ func (h *Handler) HandleCreateEvent(c *gin.Context) {
 
 	params := db.CreateUsageEventParams{
 		CustomerID:     customerID,
-		OperatorID:     operatorID.(pgtype.UUID),
+		OperatorID:     opID,
 		EventName:      req.EventName,
 		Quantity:       req.Quantity,
 		IdempotencyKey: req.IdempotencyKey,
@@ -56,7 +63,10 @@ func (h *Handler) HandleCreateEvent(c *gin.Context) {
 		var u *UsageEventExists
 		if errors.As(err, &u) {
 			slog.Error("Usage event already exists")
-			utils.BadRequest(c, u.Error())
+			utils.OK(c, gin.H{
+				"message": "usage event already exists",
+				"data":    toUsageEventResponse(event),
+			})
 			return
 		}
 		slog.Error("Error creating usage event")
@@ -64,5 +74,5 @@ func (h *Handler) HandleCreateEvent(c *gin.Context) {
 		return
 	}
 
-	utils.Created(c, event)
+	utils.Created(c, toUsageEventResponse(event))
 }
