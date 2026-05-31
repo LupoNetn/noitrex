@@ -12,10 +12,17 @@ import (
 
 type Querier interface {
 	CreateOperator(ctx context.Context, arg CreateOperatorParams) (Operator, error)
+	CreateUsageEvent(ctx context.Context, arg CreateUsageEventParams) (UsageEvent, error)
 	DeleteOperator(ctx context.Context, id pgtype.UUID) error
 	GetOperator(ctx context.Context, id pgtype.UUID) (Operator, error)
 	GetOperatorByEmail(ctx context.Context, supportEmail pgtype.Text) (Operator, error)
+	GetUsageEventByCustomerID(ctx context.Context, customerID pgtype.UUID) (UsageEvent, error)
+	GetUsageEventByCustomerIDAndEventName(ctx context.Context, arg GetUsageEventByCustomerIDAndEventNameParams) (UsageEvent, error)
+	GetUsageEventByID(ctx context.Context, id pgtype.UUID) (UsageEvent, error)
+	GetUsageEventByIdempotencyKey(ctx context.Context, idempotencyKey string) (UsageEvent, error)
 	ListOperators(ctx context.Context) ([]Operator, error)
+	ListUsageEventsByCustomerID(ctx context.Context, customerID pgtype.UUID) ([]UsageEvent, error)
+	ListUsageEventsByEventName(ctx context.Context, eventName string) ([]UsageEvent, error)
 	UpdateOperator(ctx context.Context, arg UpdateOperatorParams) (Operator, error)
 	UpdateOperatorStatus(ctx context.Context, arg UpdateOperatorStatusParams) error
 }
