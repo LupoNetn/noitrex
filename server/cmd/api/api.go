@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/luponetn/nexusmq/pkg/broker"
 	"github.com/luponetn/noitrex/internal/auth"
 	"github.com/luponetn/noitrex/internal/db"
 	"github.com/luponetn/noitrex/internal/events"
@@ -24,7 +25,7 @@ func CreateRouter() *gin.Engine {
 	return router
 }
 
-func CreateRoutes(router *gin.Engine, queries db.Querier, JWTAccessSecret, JWTRefreshSecret string) {
+func CreateRoutes(router *gin.Engine, queries db.Querier, JWTAccessSecret, JWTRefreshSecret string, broker broker.Broker) {
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status":  "ok",
@@ -36,7 +37,7 @@ func CreateRoutes(router *gin.Engine, queries db.Querier, JWTAccessSecret, JWTRe
 	operatorHandler := operator.NewHandler(operatorService)
 	operator.NewRouter(router, operatorHandler)
 
-	eventsService := events.NewService(queries)
+	eventsService := events.NewService(queries, broker)
 	eventsHandler := events.NewHandler(eventsService)
 	events.NewRouter(router, eventsHandler, JWTAccessSecret)
 

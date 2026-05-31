@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/luponetn/noitrex/internal/broker"
 	"github.com/luponetn/noitrex/internal/config"
 	"github.com/luponetn/noitrex/internal/db"
 	"github.com/luponetn/noitrex/internal/logger"
@@ -34,7 +35,10 @@ func main() {
 
 	router := CreateRouter()
 
-	CreateRoutes(router, queries, cfg.JWTAccessSecret, cfg.JWTRefreshSecret)
+	broker := broker.NewBroker()
+	defer broker.Shutdown()
+
+	CreateRoutes(router, queries, cfg.JWTAccessSecret, cfg.JWTRefreshSecret, broker)
 
 	app := &App{
 		Cfg:    cfg,

@@ -2,11 +2,14 @@ package events
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/luponetn/nexusmq/pkg/broker"
 	"github.com/luponetn/noitrex/internal/db"
 )
 
@@ -15,12 +18,14 @@ type Service interface {
 }
 
 type Svc struct {
-	db db.Querier
+	db     db.Querier
+	broker broker.Broker
 }
 
-func NewService(db db.Querier) Service {
+func NewService(db db.Querier, b broker.Broker) Service {
 	return &Svc{
-		db: db,
+		db:     db,
+		broker: b,
 	}
 }
 
@@ -47,5 +52,19 @@ func (s *Svc) CreateUsageEvent(ctx context.Context, args db.CreateUsageEventPara
 		return db.UsageEvent{}, fmt.Errorf("create usage event: %w", err)
 	}
 
+	payload, err := json.Marshal(newEvent)
+	if err != nil {
+		slog.Error("failed to marshal usage event for broker", "error", err)
+		return newEvent, nil
+	}
+
+	if err := s.broker.Publish("usage.ingested", &broker.Message{
+		Payload:   payload,
+		Timestamp: time.Now(),
+	}); err != nil {
+		slog.Error("failed to publish usage event to broker", "error", err)
+	}
+
 	return newEvent, nil
+
 }
