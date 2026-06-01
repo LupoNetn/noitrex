@@ -1,7 +1,11 @@
 package main
 
 import (
+	"context"
 	"log/slog"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -46,7 +50,11 @@ func main() {
 	}
 	defer redisClient.Close()
 
-	metering.NewMeteringEngine(broker, redisClient, queries)
+	meteringEngine := metering.NewMeteringEngine(broker, redisClient, queries)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+
+	go meteringEngine.Start(ctx)
 
 	CreateRoutes(router, queries, cfg.JWTAccessSecret, cfg.JWTRefreshSecret, broker)
 

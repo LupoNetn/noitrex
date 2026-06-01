@@ -65,6 +65,7 @@ func (m *MeteringEngine) Start(ctx context.Context) {
 					slog.Error("failed to receive message", "error", res.err)
 					continue
 				}
+				slog.Info("it fucking works!!, nexusmq workssss!!!")
 				m.ProcessUsageEvent(res.msg)
 			case <-ticker.C:
 				if err := m.FlushMeterUsage(ctx); err != nil {
@@ -141,10 +142,9 @@ func (m *MeteringEngine) FlushMeterUsage(ctx context.Context) error {
 		period := parts[4] // "YYYY-MM"
 
 		// GETDEL atomically reads and removes the key, preventing double-counting
-		// if two flush cycles overlap.
 		val, err := m.redisClient.GetDel(ctx, key).Result()
 		if err == redis.Nil {
-			continue // already consumed by a concurrent flush
+			continue
 		}
 		if err != nil {
 			slog.Error("failed to getdel key", "key", key, "error", err)
