@@ -12,6 +12,7 @@ type Config struct {
 	Port             string
 	JWTAccessSecret  string
 	JWTRefreshSecret string
+	RedisUrl         string
 }
 
 func LoadConfig() (*Config, error) {
@@ -45,11 +46,19 @@ func LoadConfig() (*Config, error) {
 		}
 	}
 
+	RedisUrl, err := ExtractEnvKey("REDIS_URL", "redis://localhost:6379")
+	if err != nil {
+		if errors.Is(err, ErrEnvironmentVariableNotFound) {
+			return nil, errors.New("redis url env value not found")
+		}
+	}
+
 	return &Config{
 		DBUrl:            DBUrl,
 		Port:             Port,
 		JWTAccessSecret:  JWTAccessSecret,
 		JWTRefreshSecret: JWTRefreshSecret,
+		RedisUrl:         RedisUrl,
 	}, nil
 
 }

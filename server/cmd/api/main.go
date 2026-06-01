@@ -9,6 +9,8 @@ import (
 	"github.com/luponetn/noitrex/internal/config"
 	"github.com/luponetn/noitrex/internal/db"
 	"github.com/luponetn/noitrex/internal/logger"
+	"github.com/luponetn/noitrex/internal/metering"
+	"github.com/luponetn/noitrex/internal/redis"
 )
 
 type App struct {
@@ -37,6 +39,14 @@ func main() {
 
 	broker := broker.NewBroker()
 	defer broker.Shutdown()
+
+	redisClient, err := redis.NewClient(cfg.RedisUrl)
+	if err != nil {
+		slog.Error("could not startup redis", "error", err.Error())
+	}
+	defer redisClient.Close()
+
+	metering.NewMeteringEngine(broker, redisClient)
 
 	CreateRoutes(router, queries, cfg.JWTAccessSecret, cfg.JWTRefreshSecret, broker)
 
