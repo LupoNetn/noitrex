@@ -46,7 +46,7 @@ func main() {
 	}
 	defer redisClient.Close()
 
-	metering.NewMeteringEngine(broker, redisClient)
+	metering.NewMeteringEngine(broker, redisClient, queries)
 
 	CreateRoutes(router, queries, cfg.JWTAccessSecret, cfg.JWTRefreshSecret, broker)
 

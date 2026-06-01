@@ -1,5 +1,5 @@
 -- +goose Up
-CREATE TABLE IF NOT EXISTS user_aggregates (
+CREATE TABLE IF NOT EXISTS usage_aggregates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     operator_id UUID NOT NULL REFERENCES operators(id) ON DELETE CASCADE,
     customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
@@ -14,4 +14,4 @@ CREATE TABLE IF NOT EXISTS user_aggregates (
 
 
 -- +goose Down
-DROP TABLE IF EXISTS user_aggregates;
+DROP TABLE IF EXISTS usage_aggregates;

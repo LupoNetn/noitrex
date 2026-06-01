@@ -234,17 +234,7 @@ type Plan struct {
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
 }
 
-type UsageEvent struct {
-	ID             pgtype.UUID        `json:"id"`
-	CustomerID     pgtype.UUID        `json:"customer_id"`
-	OperatorID     pgtype.UUID        `json:"operator_id"`
-	EventName      string             `json:"event_name"`
-	Quantity       int64              `json:"quantity"`
-	IdempotencyKey string             `json:"idempotency_key"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-}
-
-type UserAggregate struct {
+type UsageAggregate struct {
 	ID          pgtype.UUID        `json:"id"`
 	OperatorID  pgtype.UUID        `json:"operator_id"`
 	CustomerID  pgtype.UUID        `json:"customer_id"`
@@ -254,6 +244,16 @@ type UserAggregate struct {
 	TotalUnits  int64              `json:"total_units"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type UsageEvent struct {
+	ID             pgtype.UUID        `json:"id"`
+	CustomerID     pgtype.UUID        `json:"customer_id"`
+	OperatorID     pgtype.UUID        `json:"operator_id"`
+	EventName      string             `json:"event_name"`
+	Quantity       int64              `json:"quantity"`
+	IdempotencyKey string             `json:"idempotency_key"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 }
 
 type WebhookDelivery struct {

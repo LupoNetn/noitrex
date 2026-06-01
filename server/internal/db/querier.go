@@ -25,6 +25,7 @@ type Querier interface {
 	ListUsageEventsByEventName(ctx context.Context, eventName string) ([]UsageEvent, error)
 	UpdateOperator(ctx context.Context, arg UpdateOperatorParams) (Operator, error)
 	UpdateOperatorStatus(ctx context.Context, arg UpdateOperatorStatusParams) error
+	UpsertUsageAggregate(ctx context.Context, arg UpsertUsageAggregateParams) error
 }
 
 var _ Querier = (*Queries)(nil)
