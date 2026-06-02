@@ -13,8 +13,8 @@
 - [x] Write customers migration
 - [x] Write sqlc queries — CreateCustomer, GetCustomer, ListCustomers
 - [x] Run sqlc generate
-- [ ] Customer service — CreateCustomer, GetCustomer, ListCustomers
-- [ ] Customer handler — POST /v1/customers, GET /v1/customers, GET /v1/customers/:id
+- [x] Customer service — CreateCustomer, GetCustomer, ListCustomers
+- [x] Customer handler — POST /v1/customers, GET /v1/customers, GET /v1/customers/:id
 - [ ] GET /v1/customers/:id/usage — read from Redis
 
 ## Plans

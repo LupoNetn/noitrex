@@ -10,4 +10,8 @@ func NewRouter(router *gin.Engine, h *Handler, JWTAccessSecret string) {
 	customerGroup.Use(middleware.AuthMiddleware(JWTAccessSecret))
 
 	customerGroup.POST("/", h.CreateCustomer)
+	customerGroup.GET("/", h.ListCustomers)
+	customerGroup.GET("/email", h.GetCustomerByEmail)
+	customerGroup.GET("/external", h.GetCustomerByExternalID)
+	customerGroup.GET("/:id", h.GetCustomer)
 }

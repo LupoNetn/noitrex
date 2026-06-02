@@ -1,6 +1,7 @@
 package customers
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -8,6 +9,8 @@ import (
 )
 
 // Errors Both Sentinel and Custom error types
+var ErrCustomerNotFound = errors.New("customer not found")
+
 type CustomerAlreadyExists struct {
 	OperatorID string
 	ExternalID string
