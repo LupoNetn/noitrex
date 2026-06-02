@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/luponetn/nexusmq/pkg/broker"
 	"github.com/luponetn/noitrex/internal/auth"
+	"github.com/luponetn/noitrex/internal/customers"
 	"github.com/luponetn/noitrex/internal/db"
 	"github.com/luponetn/noitrex/internal/events"
 	operator "github.com/luponetn/noitrex/internal/operators"
@@ -36,6 +37,10 @@ func CreateRoutes(router *gin.Engine, queries db.Querier, JWTAccessSecret, JWTRe
 	operatorService := operator.NewService(queries)
 	operatorHandler := operator.NewHandler(operatorService)
 	operator.NewRouter(router, operatorHandler)
+
+	customerService := customers.NewService(queries)
+	customerHandler := customers.NewHandler(customerService)
+	customers.NewRouter(router, customerHandler, JWTAccessSecret)
 
 	eventsService := events.NewService(queries, broker)
 	eventsHandler := events.NewHandler(eventsService)
