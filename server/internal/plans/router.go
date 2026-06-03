@@ -14,4 +14,6 @@ func NewRouter(router *gin.Engine, h *Handler, JWTAccessSecret string) {
 	planGroup.GET("/:id", h.HandleGetPlanById)
 	planGroup.GET("/", h.HandleGetPlanByName)
 	planGroup.GET("/list", h.HandleListPlans)
+	planGroup.PATCH("/:id", h.HandleUpdatePlan)
+	planGroup.DELETE("/:id", h.HandleDeletePlan)
 }

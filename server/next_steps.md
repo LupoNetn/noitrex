@@ -1,7 +1,7 @@
 # Noitrex — Remaining Tasks
 
 ## Metering Engine
-- [x] Write UpsertUsageAggregate sqlc query
+- [xL] Write UpsertUsageAggregate sqlc query
 - [x] Run sqlc generate
 - [x] Implement processEvent — decode message, build Redis key, INCRBY
 - [x] Implement flush — read Redis keys, upsert to usage_aggregates, reset counter

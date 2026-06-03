@@ -1,6 +1,7 @@
 package plans
 
 import (
+	"encoding/json"
 	"errors"
 	"log/slog"
 
@@ -26,6 +27,13 @@ func (h *Handler) HandleCreatePlan(c *gin.Context) {
 		return
 	}
 
+	tiers, err := json.Marshal(req.Tiers)
+	if err != nil {
+		slog.Error("failed to marshal tiers", "error", err)
+		utils.BadRequest(c, "Invalid tiers")
+		return
+	}
+
 	operatorIDStr, exists := c.Get("operatorId")
 	if !exists {
 		slog.Error("unauthorized access, operator id not found")
@@ -34,9 +42,9 @@ func (h *Handler) HandleCreatePlan(c *gin.Context) {
 	}
 
 	var opId pgtype.UUID
-	err := opId.Scan(operatorIDStr)
-	if err != nil {
-		slog.Error("failed to parse operator id", "error", err)
+	errOp := opId.Scan(operatorIDStr)
+	if errOp != nil {
+		slog.Error("failed to parse operator id", "error", errOp)
 		utils.BadRequest(c, "Invalid operator id")
 		return
 	}
@@ -45,7 +53,7 @@ func (h *Handler) HandleCreatePlan(c *gin.Context) {
 		Name:          req.Name,
 		PricingModel:  req.PricingModel,
 		UnitPriceCent: req.UnitPriceCent,
-		Tiers:         req.Tiers,
+		Tiers:         tiers,
 		BillingPeriod: req.BillingPeriod,
 		OperatorID:    opId,
 	}
@@ -163,13 +171,65 @@ func (h *Handler) HandleUpdatePlan(c *gin.Context) {
 		return
 	}
 
+	planIDStr := c.Param("id")
+	if planIDStr == "" {
+		slog.Error("missing plan id")
+		utils.BadRequest(c, "missing plan id")
+		return
+	}
+
+	var planID pgtype.UUID
+	planErr := planID.Scan(planIDStr)
+	if planErr != nil {
+		slog.Error("failed to parse plan id")
+		utils.BadRequest(c, "invalid plan id")
+		return
+	}
+
+	var name string
+
+	if req.Name != nil {
+		if *req.Name == "" {
+			slog.Error("plan name cannot be empty")
+			utils.BadRequest(c, "plan name cannot be empty")
+			return
+		}
+		name = string(*req.Name)
+	}
+
+	var unitPriceCent pgtype.Int8
+	if req.UnitPriceCent != nil {
+		unitPriceCent = *req.UnitPriceCent
+	}
+
+	var pricingModel db.PricingType
+	if req.PricingModel != nil {
+		pricingModel = *req.PricingModel
+	}
+
+	var tiers []byte
+	if req.Tiers != nil {
+		var err error
+		tiers, err = json.Marshal(req.Tiers)
+		if err != nil {
+			slog.Error("failed to marshal tiers", "error", err)
+			utils.BadRequest(c, "Invalid tiers")
+			return
+		}
+	}
+
+	var billingPeriod db.BillingPeriodType
+	if req.BillingPeriod != nil {
+		billingPeriod = *req.BillingPeriod
+	}
+
 	params := db.UpdatePlanParams{
-		ID:            req.ID,
-		Name:          req.Name,
-		PricingModel:  req.PricingModel,
-		UnitPriceCent: req.UnitPriceCent,
-		Tiers:         req.Tiers,
-		BillingPeriod: req.BillingPeriod,
+		ID:            planID,
+		Name:          name,
+		PricingModel:  pricingModel,
+		UnitPriceCent: unitPriceCent,
+		Tiers:         tiers,
+		BillingPeriod: billingPeriod,
 	}
 
 	plan, err := h.service.UpdatePlan(c.Request.Context(), params)
