@@ -15,14 +15,14 @@
 - [x] Run sqlc generate
 - [x] Customer service — CreateCustomer, GetCustomer, ListCustomers
 - [x] Customer handler — POST /v1/customers, GET /v1/customers, GET /v1/customers/:id
-- [ ] GET /v1/customers/:id/usage — read from Redis
+- [ ] GET /v1/customers/:id/usage — read from Redis - (will be implemented once all core api's and endpoints have been implemented.)
 
 ## Plans
-- [ ] Write plans migration
-- [ ] Write sqlc queries — CreatePlan, GetPlan, ListPlans
-- [ ] Run sqlc generate
-- [ ] Plan service — CreatePlan, GetPlan, ListPlans
-- [ ] Plan handler — POST /v1/plans, GET /v1/plans, GET /v1/plans/:id
+- [x] Write plans migration
+- [x] Write sqlc queries — CreatePlan, GetPlan, ListPlans
+- [x] Run sqlc generate
+- [x] Plan service — CreatePlan, GetPlan, ListPlans
+- [x] Plan handler — POST /v1/plans, GET /v1/plans, GET /v1/plans/:id
 
 ## Billing Processor
 - [ ] Write invoices migration

@@ -13,24 +13,30 @@ import (
 type Querier interface {
 	CreateCustomer(ctx context.Context, arg CreateCustomerParams) (Customer, error)
 	CreateOperator(ctx context.Context, arg CreateOperatorParams) (Operator, error)
+	CreatePlan(ctx context.Context, arg CreatePlanParams) (Plan, error)
 	CreateUsageEvent(ctx context.Context, arg CreateUsageEventParams) (UsageEvent, error)
 	DeleteOperator(ctx context.Context, id pgtype.UUID) error
+	DeletePlan(ctx context.Context, id pgtype.UUID) error
 	GetCustomerByEmail(ctx context.Context, arg GetCustomerByEmailParams) (Customer, error)
 	GetCustomerByExternalID(ctx context.Context, arg GetCustomerByExternalIDParams) (Customer, error)
 	GetCustomerByID(ctx context.Context, id pgtype.UUID) (Customer, error)
 	GetOperator(ctx context.Context, id pgtype.UUID) (Operator, error)
 	GetOperatorByEmail(ctx context.Context, supportEmail pgtype.Text) (Operator, error)
+	GetPlan(ctx context.Context, id pgtype.UUID) (Plan, error)
+	GetPlanByName(ctx context.Context, arg GetPlanByNameParams) (Plan, error)
 	GetUsageEventByCustomerID(ctx context.Context, customerID pgtype.UUID) (UsageEvent, error)
 	GetUsageEventByCustomerIDAndEventName(ctx context.Context, arg GetUsageEventByCustomerIDAndEventNameParams) (UsageEvent, error)
 	GetUsageEventByID(ctx context.Context, id pgtype.UUID) (UsageEvent, error)
 	GetUsageEventByIdempotencyKey(ctx context.Context, idempotencyKey string) (UsageEvent, error)
 	ListCustomers(ctx context.Context, operatorID pgtype.UUID) ([]Customer, error)
 	ListOperators(ctx context.Context) ([]Operator, error)
+	ListPlans(ctx context.Context, operatorID pgtype.UUID) ([]Plan, error)
 	ListUsageEventsByCustomerID(ctx context.Context, customerID pgtype.UUID) ([]UsageEvent, error)
 	ListUsageEventsByEventName(ctx context.Context, eventName string) ([]UsageEvent, error)
 	UpdateCustomerPlan(ctx context.Context, arg UpdateCustomerPlanParams) (Customer, error)
 	UpdateOperator(ctx context.Context, arg UpdateOperatorParams) (Operator, error)
 	UpdateOperatorStatus(ctx context.Context, arg UpdateOperatorStatusParams) error
+	UpdatePlan(ctx context.Context, arg UpdatePlanParams) (Plan, error)
 	UpsertUsageAggregate(ctx context.Context, arg UpsertUsageAggregateParams) error
 }
 
