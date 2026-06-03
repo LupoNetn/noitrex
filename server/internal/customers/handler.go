@@ -54,6 +54,7 @@ func (h *Handler) CreateCustomer(c *gin.Context) {
 		ExternalID: exID,
 		Name:       req.Name,
 		Email:      req.Email,
+		PlanName:   req.PlanName,
 	}
 
 	customer, err := h.service.CreateCustomer(c.Request.Context(), params)

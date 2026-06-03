@@ -15,7 +15,7 @@ const createPlan = `-- name: CreatePlan :one
 INSERT INTO plans 
 (operator_id,name,pricing_model, unit_price_cent,tiers, billing_period) 
 VALUES ($1,$2,$3,$4,$5,$6) 
-RETURNING id, operator_id, name, pricing_model, unit_price_cent, tiers, billing_period, created_at, updated_at
+RETURNING id, pricing_model, unit_price_cent, tiers, billing_period, created_at, updated_at, name, operator_id
 `
 
 type CreatePlanParams struct {
@@ -39,14 +39,14 @@ func (q *Queries) CreatePlan(ctx context.Context, arg CreatePlanParams) (Plan, e
 	var i Plan
 	err := row.Scan(
 		&i.ID,
-		&i.OperatorID,
-		&i.Name,
 		&i.PricingModel,
 		&i.UnitPriceCent,
 		&i.Tiers,
 		&i.BillingPeriod,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Name,
+		&i.OperatorID,
 	)
 	return i, err
 }
@@ -61,7 +61,7 @@ func (q *Queries) DeletePlan(ctx context.Context, id pgtype.UUID) error {
 }
 
 const getPlan = `-- name: GetPlan :one
-SELECT id, operator_id, name, pricing_model, unit_price_cent, tiers, billing_period, created_at, updated_at FROM plans WHERE id = $1
+SELECT id, pricing_model, unit_price_cent, tiers, billing_period, created_at, updated_at, name, operator_id FROM plans WHERE id = $1
 `
 
 func (q *Queries) GetPlan(ctx context.Context, id pgtype.UUID) (Plan, error) {
@@ -69,20 +69,20 @@ func (q *Queries) GetPlan(ctx context.Context, id pgtype.UUID) (Plan, error) {
 	var i Plan
 	err := row.Scan(
 		&i.ID,
-		&i.OperatorID,
-		&i.Name,
 		&i.PricingModel,
 		&i.UnitPriceCent,
 		&i.Tiers,
 		&i.BillingPeriod,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Name,
+		&i.OperatorID,
 	)
 	return i, err
 }
 
 const getPlanByName = `-- name: GetPlanByName :one
-SELECT id, operator_id, name, pricing_model, unit_price_cent, tiers, billing_period, created_at, updated_at FROM plans WHERE operator_id = $1 AND name = $2
+SELECT id, pricing_model, unit_price_cent, tiers, billing_period, created_at, updated_at, name, operator_id FROM plans WHERE operator_id = $1 AND name = $2
 `
 
 type GetPlanByNameParams struct {
@@ -95,20 +95,20 @@ func (q *Queries) GetPlanByName(ctx context.Context, arg GetPlanByNameParams) (P
 	var i Plan
 	err := row.Scan(
 		&i.ID,
-		&i.OperatorID,
-		&i.Name,
 		&i.PricingModel,
 		&i.UnitPriceCent,
 		&i.Tiers,
 		&i.BillingPeriod,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Name,
+		&i.OperatorID,
 	)
 	return i, err
 }
 
 const listPlans = `-- name: ListPlans :many
-SELECT id, operator_id, name, pricing_model, unit_price_cent, tiers, billing_period, created_at, updated_at FROM plans WHERE operator_id = $1
+SELECT id, pricing_model, unit_price_cent, tiers, billing_period, created_at, updated_at, name, operator_id FROM plans WHERE operator_id = $1
 `
 
 func (q *Queries) ListPlans(ctx context.Context, operatorID pgtype.UUID) ([]Plan, error) {
@@ -122,14 +122,14 @@ func (q *Queries) ListPlans(ctx context.Context, operatorID pgtype.UUID) ([]Plan
 		var i Plan
 		if err := rows.Scan(
 			&i.ID,
-			&i.OperatorID,
-			&i.Name,
 			&i.PricingModel,
 			&i.UnitPriceCent,
 			&i.Tiers,
 			&i.BillingPeriod,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Name,
+			&i.OperatorID,
 		); err != nil {
 			return nil, err
 		}
@@ -149,7 +149,7 @@ UPDATE plans SET
     tiers = COALESCE($4, tiers),
     billing_period = COALESCE($5, billing_period),
     updated_at = NOW()
-WHERE id = $6 RETURNING id, operator_id, name, pricing_model, unit_price_cent, tiers, billing_period, created_at, updated_at
+WHERE id = $6 RETURNING id, pricing_model, unit_price_cent, tiers, billing_period, created_at, updated_at, name, operator_id
 `
 
 type UpdatePlanParams struct {
@@ -173,14 +173,14 @@ func (q *Queries) UpdatePlan(ctx context.Context, arg UpdatePlanParams) (Plan, e
 	var i Plan
 	err := row.Scan(
 		&i.ID,
-		&i.OperatorID,
-		&i.Name,
 		&i.PricingModel,
 		&i.UnitPriceCent,
 		&i.Tiers,
 		&i.BillingPeriod,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Name,
+		&i.OperatorID,
 	)
 	return i, err
 }

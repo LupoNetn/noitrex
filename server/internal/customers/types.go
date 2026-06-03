@@ -25,7 +25,7 @@ type CreateCustomerRequest struct {
 	ExternalID string `json:"external_id" validate:"required"`
 	Email      string `json:"email" validate:"required"`
 	Name       string `json:"name" validate:"required"`
-	PlanID     string `json:"plan_id" validate:"required"`
+	PlanName   string `json:"plan_name" validate:"required"`
 }
 
 type CustomerResponse struct {
@@ -33,7 +33,7 @@ type CustomerResponse struct {
 	ExternalID pgtype.UUID        `json:"external_id"`
 	Email      string             `json:"email"`
 	Name       string             `json:"name"`
-	PlanID     pgtype.UUID        `json:"plan_id"`
+	PlanName   string             `json:"plan_name"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 }
 
@@ -43,7 +43,7 @@ func ToCustomerResponse(customer db.Customer) *CustomerResponse {
 		ExternalID: customer.ExternalID,
 		Email:      customer.Email,
 		Name:       customer.Name,
-		PlanID:     customer.PlanID,
+		PlanName:   customer.PlanName,
 		CreatedAt:  customer.CreatedAt,
 	}
 }

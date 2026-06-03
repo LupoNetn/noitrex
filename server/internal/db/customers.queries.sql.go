@@ -13,15 +13,15 @@ import (
 
 const createCustomer = `-- name: CreateCustomer :one
 INSERT INTO customers 
-(operator_id, external_id, plan_id, name, email)
+(operator_id, external_id, plan_name, name, email)
 VALUES ($1, $2, $3, $4, $5)
-RETURNING id, operator_id, external_id, plan_id, name, email, period_start, created_at
+RETURNING id, operator_id, external_id, name, email, period_start, created_at, plan_name
 `
 
 type CreateCustomerParams struct {
 	OperatorID pgtype.UUID `json:"operator_id"`
 	ExternalID pgtype.UUID `json:"external_id"`
-	PlanID     pgtype.UUID `json:"plan_id"`
+	PlanName   string      `json:"plan_name"`
 	Name       string      `json:"name"`
 	Email      string      `json:"email"`
 }
@@ -30,7 +30,7 @@ func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) 
 	row := q.db.QueryRow(ctx, createCustomer,
 		arg.OperatorID,
 		arg.ExternalID,
-		arg.PlanID,
+		arg.PlanName,
 		arg.Name,
 		arg.Email,
 	)
@@ -39,17 +39,17 @@ func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) 
 		&i.ID,
 		&i.OperatorID,
 		&i.ExternalID,
-		&i.PlanID,
 		&i.Name,
 		&i.Email,
 		&i.PeriodStart,
 		&i.CreatedAt,
+		&i.PlanName,
 	)
 	return i, err
 }
 
 const getCustomerByEmail = `-- name: GetCustomerByEmail :one
-SELECT id, operator_id, external_id, plan_id, name, email, period_start, created_at FROM customers WHERE operator_id = $1 AND email = $2
+SELECT id, operator_id, external_id, name, email, period_start, created_at, plan_name FROM customers WHERE operator_id = $1 AND email = $2
 `
 
 type GetCustomerByEmailParams struct {
@@ -64,17 +64,17 @@ func (q *Queries) GetCustomerByEmail(ctx context.Context, arg GetCustomerByEmail
 		&i.ID,
 		&i.OperatorID,
 		&i.ExternalID,
-		&i.PlanID,
 		&i.Name,
 		&i.Email,
 		&i.PeriodStart,
 		&i.CreatedAt,
+		&i.PlanName,
 	)
 	return i, err
 }
 
 const getCustomerByExternalID = `-- name: GetCustomerByExternalID :one
-SELECT id, operator_id, external_id, plan_id, name, email, period_start, created_at FROM customers WHERE operator_id = $1 AND external_id = $2
+SELECT id, operator_id, external_id, name, email, period_start, created_at, plan_name FROM customers WHERE operator_id = $1 AND external_id = $2
 `
 
 type GetCustomerByExternalIDParams struct {
@@ -89,17 +89,17 @@ func (q *Queries) GetCustomerByExternalID(ctx context.Context, arg GetCustomerBy
 		&i.ID,
 		&i.OperatorID,
 		&i.ExternalID,
-		&i.PlanID,
 		&i.Name,
 		&i.Email,
 		&i.PeriodStart,
 		&i.CreatedAt,
+		&i.PlanName,
 	)
 	return i, err
 }
 
 const getCustomerByID = `-- name: GetCustomerByID :one
-SELECT id, operator_id, external_id, plan_id, name, email, period_start, created_at FROM customers WHERE id = $1
+SELECT id, operator_id, external_id, name, email, period_start, created_at, plan_name FROM customers WHERE id = $1
 `
 
 func (q *Queries) GetCustomerByID(ctx context.Context, id pgtype.UUID) (Customer, error) {
@@ -109,17 +109,17 @@ func (q *Queries) GetCustomerByID(ctx context.Context, id pgtype.UUID) (Customer
 		&i.ID,
 		&i.OperatorID,
 		&i.ExternalID,
-		&i.PlanID,
 		&i.Name,
 		&i.Email,
 		&i.PeriodStart,
 		&i.CreatedAt,
+		&i.PlanName,
 	)
 	return i, err
 }
 
 const listCustomers = `-- name: ListCustomers :many
-SELECT id, operator_id, external_id, plan_id, name, email, period_start, created_at FROM customers WHERE operator_id = $1 ORDER BY created_at DESC
+SELECT id, operator_id, external_id, name, email, period_start, created_at, plan_name FROM customers WHERE operator_id = $1 ORDER BY created_at DESC
 `
 
 func (q *Queries) ListCustomers(ctx context.Context, operatorID pgtype.UUID) ([]Customer, error) {
@@ -135,11 +135,11 @@ func (q *Queries) ListCustomers(ctx context.Context, operatorID pgtype.UUID) ([]
 			&i.ID,
 			&i.OperatorID,
 			&i.ExternalID,
-			&i.PlanID,
 			&i.Name,
 			&i.Email,
 			&i.PeriodStart,
 			&i.CreatedAt,
+			&i.PlanName,
 		); err != nil {
 			return nil, err
 		}
@@ -152,27 +152,27 @@ func (q *Queries) ListCustomers(ctx context.Context, operatorID pgtype.UUID) ([]
 }
 
 const updateCustomerPlan = `-- name: UpdateCustomerPlan :one
-UPDATE customers SET plan_id = $1, updated_at = NOW() WHERE operator_id = $2 AND id = $3 RETURNING id, operator_id, external_id, plan_id, name, email, period_start, created_at
+UPDATE customers SET plan_name = $1, updated_at = NOW() WHERE operator_id = $2 AND id = $3 RETURNING id, operator_id, external_id, name, email, period_start, created_at, plan_name
 `
 
 type UpdateCustomerPlanParams struct {
-	PlanID     pgtype.UUID `json:"plan_id"`
+	PlanName   string      `json:"plan_name"`
 	OperatorID pgtype.UUID `json:"operator_id"`
 	ID         pgtype.UUID `json:"id"`
 }
 
 func (q *Queries) UpdateCustomerPlan(ctx context.Context, arg UpdateCustomerPlanParams) (Customer, error) {
-	row := q.db.QueryRow(ctx, updateCustomerPlan, arg.PlanID, arg.OperatorID, arg.ID)
+	row := q.db.QueryRow(ctx, updateCustomerPlan, arg.PlanName, arg.OperatorID, arg.ID)
 	var i Customer
 	err := row.Scan(
 		&i.ID,
 		&i.OperatorID,
 		&i.ExternalID,
-		&i.PlanID,
 		&i.Name,
 		&i.Email,
 		&i.PeriodStart,
 		&i.CreatedAt,
+		&i.PlanName,
 	)
 	return i, err
 }

@@ -188,11 +188,11 @@ type Customer struct {
 	ID          pgtype.UUID        `json:"id"`
 	OperatorID  pgtype.UUID        `json:"operator_id"`
 	ExternalID  pgtype.UUID        `json:"external_id"`
-	PlanID      pgtype.UUID        `json:"plan_id"`
 	Name        string             `json:"name"`
 	Email       string             `json:"email"`
 	PeriodStart pgtype.Timestamptz `json:"period_start"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	PlanName    string             `json:"plan_name"`
 }
 
 type Invoice struct {
@@ -224,14 +224,14 @@ type Operator struct {
 
 type Plan struct {
 	ID            pgtype.UUID        `json:"id"`
-	OperatorID    pgtype.UUID        `json:"operator_id"`
-	Name          string             `json:"name"`
 	PricingModel  PricingType        `json:"pricing_model"`
 	UnitPriceCent pgtype.Int8        `json:"unit_price_cent"`
 	Tiers         []byte             `json:"tiers"`
 	BillingPeriod BillingPeriodType  `json:"billing_period"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	Name          string             `json:"name"`
+	OperatorID    pgtype.UUID        `json:"operator_id"`
 }
 
 type UsageAggregate struct {
