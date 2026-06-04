@@ -17,6 +17,7 @@ import (
 	"github.com/luponetn/noitrex/internal/customers"
 	"github.com/luponetn/noitrex/internal/db"
 	"github.com/luponetn/noitrex/internal/events"
+	"github.com/luponetn/noitrex/internal/invoices"
 	operator "github.com/luponetn/noitrex/internal/operators"
 	"github.com/luponetn/noitrex/internal/plans"
 )
@@ -38,6 +39,10 @@ func CreateRoutes(router *gin.Engine, queries db.Querier, JWTAccessSecret, JWTRe
 	operatorService := operator.NewService(queries)
 	operatorHandler := operator.NewHandler(operatorService)
 	operator.NewRouter(router, operatorHandler)
+
+	invoicesService := invoices.NewService(queries)
+	invoicesHandler := invoices.NewHandler(invoicesService)
+	invoices.NewRouter(router, invoicesHandler, JWTAccessSecret)
 
 	planService := plans.NewService(queries)
 	planHandler := plans.NewHandler(planService)
