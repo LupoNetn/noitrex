@@ -23,7 +23,24 @@ func NewBilling(db db.Querier, broker broker.Broker) *Billing {
 	return &Billing{db: db, broker: broker}
 }
 
-func (b *Billing) Start() {}
+func (b *Billing) Start(ctx context.Context) {
+	slog.Info("Starting billing engine...")
+	b.ProcessCustomerInvoices()
+
+	ticker := time.NewTicker(1 * time.Hour)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			slog.Info("Running scheduled billing process")
+			b.ProcessCustomerInvoices()
+		case <-ctx.Done():
+			slog.Info("Billing engine shutting down")
+			return
+		}
+	}
+}
 
 func (b *Billing) ProcessCustomerInvoices() {
 

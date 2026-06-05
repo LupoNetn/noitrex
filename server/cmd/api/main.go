@@ -15,6 +15,7 @@ import (
 	"github.com/luponetn/noitrex/internal/logger"
 	"github.com/luponetn/noitrex/internal/metering"
 	"github.com/luponetn/noitrex/internal/redis"
+	"github.com/luponetn/noitrex/internal/billing"
 )
 
 type App struct {
@@ -55,6 +56,9 @@ func main() {
 	defer cancel()
 
 	go meteringEngine.Start(ctx)
+
+	billingEngine := billing.NewBilling(queries, broker)
+	go billingEngine.Start(ctx)
 
 	CreateRoutes(router, queries, cfg.JWTAccessSecret, cfg.JWTRefreshSecret, broker)
 
