@@ -188,18 +188,18 @@ export default function Home() {
 
       {/* STATS BAR */}
       <section className="border-y border-white/10 bg-white/[0.01] py-8 sm:py-12 relative z-10 w-full overflow-hidden">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 grid grid-cols-2 md:grid-cols-4 gap-y-8 sm:gap-8 text-center divide-x-0 md:divide-x divide-white/10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 grid grid-cols-2 md:grid-cols-4 gap-y-6 sm:gap-8 text-center divide-x-0 sm:divide-x sm:divide-white/10">
           {[
-            { value: "< 5ms", label: "Event ingestion p99" },
-            { value: "Exactly-once", label: "Idempotency guarantee" },
-            { value: "Integer kobo", label: "No float arithmetic" },
+            { value: "< 5ms", label: "Event ingestion" },
+            { value: "Exactly-once", label: "Idempotency" },
+            { value: "Integer kobo", label: "No float math" },
             { value: "HMAC-SHA256", label: "Signed webhooks" },
           ].map((stat, i) => (
-            <div key={stat.label} className={i % 2 === 0 ? "border-l-0" : "md:border-l border-white/10 border-l-0"}>
-              <div className="text-xl sm:text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#7c6dfa] to-[#38bdf8] mb-1 sm:mb-2 tracking-tight">
+            <div key={stat.label} className={i % 2 === 0 ? "border-l-0" : "border-l border-white/10 sm:border-l-0"}>
+              <div className="text-[1.05rem] sm:text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#7c6dfa] to-[#38bdf8] mb-1 sm:mb-2 tracking-tight whitespace-nowrap">
                 {stat.value}
               </div>
-              <div className="text-[10px] sm:text-xs md:text-sm text-white/40 font-medium">{stat.label}</div>
+              <div className="text-[10px] sm:text-xs md:text-sm text-white/40 font-medium whitespace-nowrap">{stat.label}</div>
             </div>
           ))}
         </div>
