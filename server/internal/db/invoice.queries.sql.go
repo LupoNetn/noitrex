@@ -11,6 +11,54 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createNewInvoice = `-- name: CreateNewInvoice :one
+INSERT INTO invoices (
+    operator_id,
+    customer_id,
+    amount_cents,
+    status,
+    period_start,
+    period_end,
+    line_items
+) VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, operator_id, customer_id, amount_cents, status, period_start, period_end, line_items, created_at
+`
+
+type CreateNewInvoiceParams struct {
+	OperatorID  pgtype.UUID        `json:"operator_id"`
+	CustomerID  pgtype.UUID        `json:"customer_id"`
+	AmountCents int64              `json:"amount_cents"`
+	Status      InvoiceStatus      `json:"status"`
+	PeriodStart pgtype.Timestamptz `json:"period_start"`
+	PeriodEnd   pgtype.Timestamptz `json:"period_end"`
+	LineItems   []byte             `json:"line_items"`
+}
+
+func (q *Queries) CreateNewInvoice(ctx context.Context, arg CreateNewInvoiceParams) (Invoice, error) {
+	row := q.db.QueryRow(ctx, createNewInvoice,
+		arg.OperatorID,
+		arg.CustomerID,
+		arg.AmountCents,
+		arg.Status,
+		arg.PeriodStart,
+		arg.PeriodEnd,
+		arg.LineItems,
+	)
+	var i Invoice
+	err := row.Scan(
+		&i.ID,
+		&i.OperatorID,
+		&i.CustomerID,
+		&i.AmountCents,
+		&i.Status,
+		&i.PeriodStart,
+		&i.PeriodEnd,
+		&i.LineItems,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getCustomersDueForBillingWithoutInvoice = `-- name: GetCustomersDueForBillingWithoutInvoice :many
 SELECT 
 c.id AS customer_id,
@@ -86,4 +134,145 @@ func (q *Queries) GetCustomersDueForBillingWithoutInvoice(ctx context.Context) (
 		return nil, err
 	}
 	return items, nil
+}
+
+const getInvoiceByID = `-- name: GetInvoiceByID :one
+SELECT id, operator_id, customer_id, amount_cents, status, period_start, period_end, line_items, created_at FROM invoices 
+WHERE id = $1
+`
+
+func (q *Queries) GetInvoiceByID(ctx context.Context, id pgtype.UUID) (Invoice, error) {
+	row := q.db.QueryRow(ctx, getInvoiceByID, id)
+	var i Invoice
+	err := row.Scan(
+		&i.ID,
+		&i.OperatorID,
+		&i.CustomerID,
+		&i.AmountCents,
+		&i.Status,
+		&i.PeriodStart,
+		&i.PeriodEnd,
+		&i.LineItems,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const listInvoicesByCustomer = `-- name: ListInvoicesByCustomer :many
+SELECT id, operator_id, customer_id, amount_cents, status, period_start, period_end, line_items, created_at FROM invoices
+WHERE customer_id = $1
+ORDER BY created_at DESC
+`
+
+func (q *Queries) ListInvoicesByCustomer(ctx context.Context, customerID pgtype.UUID) ([]Invoice, error) {
+	rows, err := q.db.Query(ctx, listInvoicesByCustomer, customerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Invoice
+	for rows.Next() {
+		var i Invoice
+		if err := rows.Scan(
+			&i.ID,
+			&i.OperatorID,
+			&i.CustomerID,
+			&i.AmountCents,
+			&i.Status,
+			&i.PeriodStart,
+			&i.PeriodEnd,
+			&i.LineItems,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listInvoicesByOperator = `-- name: ListInvoicesByOperator :many
+SELECT id, operator_id, customer_id, amount_cents, status, period_start, period_end, line_items, created_at FROM invoices
+WHERE operator_id = $1
+ORDER BY created_at DESC
+`
+
+func (q *Queries) ListInvoicesByOperator(ctx context.Context, operatorID pgtype.UUID) ([]Invoice, error) {
+	rows, err := q.db.Query(ctx, listInvoicesByOperator, operatorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Invoice
+	for rows.Next() {
+		var i Invoice
+		if err := rows.Scan(
+			&i.ID,
+			&i.OperatorID,
+			&i.CustomerID,
+			&i.AmountCents,
+			&i.Status,
+			&i.PeriodStart,
+			&i.PeriodEnd,
+			&i.LineItems,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateCustomerPeriodStart = `-- name: UpdateCustomerPeriodStart :exec
+UPDATE customers
+SET period_start = $2,
+    updated_at = NOW()
+WHERE id = $1
+`
+
+type UpdateCustomerPeriodStartParams struct {
+	ID          pgtype.UUID        `json:"id"`
+	PeriodStart pgtype.Timestamptz `json:"period_start"`
+}
+
+func (q *Queries) UpdateCustomerPeriodStart(ctx context.Context, arg UpdateCustomerPeriodStartParams) error {
+	_, err := q.db.Exec(ctx, updateCustomerPeriodStart, arg.ID, arg.PeriodStart)
+	return err
+}
+
+const updateInvoiceStatus = `-- name: UpdateInvoiceStatus :one
+UPDATE invoices
+SET status = $2,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, operator_id, customer_id, amount_cents, status, period_start, period_end, line_items, created_at
+`
+
+type UpdateInvoiceStatusParams struct {
+	ID     pgtype.UUID   `json:"id"`
+	Status InvoiceStatus `json:"status"`
+}
+
+func (q *Queries) UpdateInvoiceStatus(ctx context.Context, arg UpdateInvoiceStatusParams) (Invoice, error) {
+	row := q.db.QueryRow(ctx, updateInvoiceStatus, arg.ID, arg.Status)
+	var i Invoice
+	err := row.Scan(
+		&i.ID,
+		&i.OperatorID,
+		&i.CustomerID,
+		&i.AmountCents,
+		&i.Status,
+		&i.PeriodStart,
+		&i.PeriodEnd,
+		&i.LineItems,
+		&i.CreatedAt,
+	)
+	return i, err
 }

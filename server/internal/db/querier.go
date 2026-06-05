@@ -12,6 +12,7 @@ import (
 
 type Querier interface {
 	CreateCustomer(ctx context.Context, arg CreateCustomerParams) (Customer, error)
+	CreateNewInvoice(ctx context.Context, arg CreateNewInvoiceParams) (Invoice, error)
 	CreateOperator(ctx context.Context, arg CreateOperatorParams) (Operator, error)
 	CreatePlan(ctx context.Context, arg CreatePlanParams) (Plan, error)
 	CreateUsageEvent(ctx context.Context, arg CreateUsageEventParams) (UsageEvent, error)
@@ -21,6 +22,7 @@ type Querier interface {
 	GetCustomerByExternalID(ctx context.Context, arg GetCustomerByExternalIDParams) (Customer, error)
 	GetCustomerByID(ctx context.Context, id pgtype.UUID) (Customer, error)
 	GetCustomersDueForBillingWithoutInvoice(ctx context.Context) ([]GetCustomersDueForBillingWithoutInvoiceRow, error)
+	GetInvoiceByID(ctx context.Context, id pgtype.UUID) (Invoice, error)
 	GetOperator(ctx context.Context, id pgtype.UUID) (Operator, error)
 	GetOperatorByEmail(ctx context.Context, supportEmail pgtype.Text) (Operator, error)
 	GetPlan(ctx context.Context, id pgtype.UUID) (Plan, error)
@@ -30,11 +32,15 @@ type Querier interface {
 	GetUsageEventByID(ctx context.Context, id pgtype.UUID) (UsageEvent, error)
 	GetUsageEventByIdempotencyKey(ctx context.Context, idempotencyKey string) (UsageEvent, error)
 	ListCustomers(ctx context.Context, operatorID pgtype.UUID) ([]Customer, error)
+	ListInvoicesByCustomer(ctx context.Context, customerID pgtype.UUID) ([]Invoice, error)
+	ListInvoicesByOperator(ctx context.Context, operatorID pgtype.UUID) ([]Invoice, error)
 	ListOperators(ctx context.Context) ([]Operator, error)
 	ListPlans(ctx context.Context, operatorID pgtype.UUID) ([]Plan, error)
 	ListUsageEventsByCustomerID(ctx context.Context, customerID pgtype.UUID) ([]UsageEvent, error)
 	ListUsageEventsByEventName(ctx context.Context, eventName string) ([]UsageEvent, error)
+	UpdateCustomerPeriodStart(ctx context.Context, arg UpdateCustomerPeriodStartParams) error
 	UpdateCustomerPlan(ctx context.Context, arg UpdateCustomerPlanParams) (Customer, error)
+	UpdateInvoiceStatus(ctx context.Context, arg UpdateInvoiceStatusParams) (Invoice, error)
 	UpdateOperator(ctx context.Context, arg UpdateOperatorParams) (Operator, error)
 	UpdateOperatorStatus(ctx context.Context, arg UpdateOperatorStatusParams) error
 	UpdatePlan(ctx context.Context, arg UpdatePlanParams) (Plan, error)

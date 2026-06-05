@@ -27,3 +27,42 @@ AND NOT EXISTS (
     AND i.status != 'void'
 )
 ORDER BY c.id;
+
+-- name: CreateNewInvoice :one
+INSERT INTO invoices (
+    operator_id,
+    customer_id,
+    amount_cents,
+    status,
+    period_start,
+    period_end,
+    line_items
+) VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING *;
+
+-- name: GetInvoiceByID :one
+SELECT * FROM invoices 
+WHERE id = $1;
+
+-- name: ListInvoicesByCustomer :many
+SELECT * FROM invoices
+WHERE customer_id = $1
+ORDER BY created_at DESC;
+
+-- name: ListInvoicesByOperator :many
+SELECT * FROM invoices
+WHERE operator_id = $1
+ORDER BY created_at DESC;
+
+-- name: UpdateInvoiceStatus :one
+UPDATE invoices
+SET status = $2,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING *;
+
+-- name: UpdateCustomerPeriodStart :exec
+UPDATE customers
+SET period_start = $2,
+    updated_at = NOW()
+WHERE id = $1;
