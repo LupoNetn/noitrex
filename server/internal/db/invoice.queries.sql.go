@@ -194,14 +194,21 @@ func (q *Queries) ListInvoicesByCustomer(ctx context.Context, customerID pgtype.
 	return items, nil
 }
 
-const listInvoicesByOperator = `-- name: ListInvoicesByOperator :many
+const listInvoicesByOperatorPaginated = `-- name: ListInvoicesByOperatorPaginated :many
 SELECT id, operator_id, customer_id, amount_cents, status, period_start, period_end, line_items, created_at FROM invoices
 WHERE operator_id = $1
 ORDER BY created_at DESC
+LIMIT $2 OFFSET $3
 `
 
-func (q *Queries) ListInvoicesByOperator(ctx context.Context, operatorID pgtype.UUID) ([]Invoice, error) {
-	rows, err := q.db.Query(ctx, listInvoicesByOperator, operatorID)
+type ListInvoicesByOperatorPaginatedParams struct {
+	OperatorID pgtype.UUID `json:"operator_id"`
+	Limit      int32       `json:"limit"`
+	Offset     int32       `json:"offset"`
+}
+
+func (q *Queries) ListInvoicesByOperatorPaginated(ctx context.Context, arg ListInvoicesByOperatorPaginatedParams) ([]Invoice, error) {
+	rows, err := q.db.Query(ctx, listInvoicesByOperatorPaginated, arg.OperatorID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

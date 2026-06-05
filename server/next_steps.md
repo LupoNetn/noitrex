@@ -25,15 +25,15 @@
 - [x] Plan handler — POST /v1/plans, GET /v1/plans, GET /v1/plans/:id
 
 ## Billing Processor
-- [ ] Write invoices migration
-- [ ] Write sqlc queries — CreateInvoice, GetInvoice, ListInvoices
-- [ ] Run sqlc generate
-- [ ] Tier computation function — flat_rate, per_unit, tiered
+- [x] Write invoices migration
+- [x] Write sqlc queries — CreateInvoice, GetInvoice, ListInvoices
+- [x] Run sqlc generate
+- [x] Tier computation function — flat_rate, per_unit, tiered
 - [ ] Unit test tier computation for every edge case
-- [ ] Billing worker — finds customers whose period ends today
-- [ ] Billing worker — reads usage_aggregates, applies plan, creates invoice
-- [ ] Billing worker — publishes invoice.created to NexusMQ
-- [ ] Wire billing worker in main.go with a daily ticker
+- [x] Billing worker — finds customers whose period ends today
+- [x] Billing worker — reads usage_aggregates, applies plan, creates invoice
+- [x] Billing worker — publishes invoice.created to NexusMQ
+- [x] Wire billing worker in main.go with a daily ticker
 
 ## Webhooks
 - [ ] Write webhook_endpoints migration

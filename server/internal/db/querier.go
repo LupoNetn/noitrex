@@ -33,7 +33,7 @@ type Querier interface {
 	GetUsageEventByIdempotencyKey(ctx context.Context, idempotencyKey string) (UsageEvent, error)
 	ListCustomers(ctx context.Context, operatorID pgtype.UUID) ([]Customer, error)
 	ListInvoicesByCustomer(ctx context.Context, customerID pgtype.UUID) ([]Invoice, error)
-	ListInvoicesByOperator(ctx context.Context, operatorID pgtype.UUID) ([]Invoice, error)
+	ListInvoicesByOperatorPaginated(ctx context.Context, arg ListInvoicesByOperatorPaginatedParams) ([]Invoice, error)
 	ListOperators(ctx context.Context) ([]Operator, error)
 	ListPlans(ctx context.Context, operatorID pgtype.UUID) ([]Plan, error)
 	ListUsageEventsByCustomerID(ctx context.Context, customerID pgtype.UUID) ([]UsageEvent, error)

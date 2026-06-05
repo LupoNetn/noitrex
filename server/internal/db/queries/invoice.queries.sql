@@ -49,10 +49,11 @@ SELECT * FROM invoices
 WHERE customer_id = $1
 ORDER BY created_at DESC;
 
--- name: ListInvoicesByOperator :many
+-- name: ListInvoicesByOperatorPaginated :many
 SELECT * FROM invoices
 WHERE operator_id = $1
-ORDER BY created_at DESC;
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3;
 
 -- name: UpdateInvoiceStatus :one
 UPDATE invoices

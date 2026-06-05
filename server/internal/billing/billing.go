@@ -65,32 +65,45 @@ func (b *Billing) ProcessCustomerInvoices() {
 			totalUnitsUsed += aggregate.TotalUnits
 		}
 
-		var tiers []plans.PlanTiers
-		if err := json.Unmarshal(customer.PlanTiers, &tiers); err != nil {
-			slog.Error("failed to unmarshal plan tiers", "error", err)
-			continue
-		}
-
-		slices.SortFunc(tiers, func(a, b plans.PlanTiers) int {
-			return cmp.Compare(a.From, b.From)
-		})
-
 		remainingUnits := totalUnitsUsed
 		var totalAmountInCents int64
-		for _, tier := range tiers {
 
-			if remainingUnits <= 0 {
-				break
+		switch customer.PlanPricingModel {
+		case db.PricingTypeFlat:
+			if customer.PlanUnitPrice.Valid {
+				totalAmountInCents = customer.PlanUnitPrice.Int64
 			}
-			// Open-ended tier
-			if tier.To == nil {
-				totalAmountInCents += remainingUnits * tier.Price
-				break
+		case db.PricingTypePerUnit:
+			if customer.PlanUnitPrice.Valid {
+				totalAmountInCents = remainingUnits * customer.PlanUnitPrice.Int64
 			}
-			capacity := *tier.To - tier.From + 1
-			billableUnits := min(remainingUnits, capacity)
-			totalAmountInCents += billableUnits * tier.Price
-			remainingUnits -= billableUnits
+		case db.PricingTypeTiered:
+			var tiers []plans.PlanTiers
+			if err := json.Unmarshal(customer.PlanTiers, &tiers); err != nil {
+				slog.Error("failed to unmarshal plan tiers", "error", err)
+				continue
+			}
+
+			slices.SortFunc(tiers, func(a, b plans.PlanTiers) int {
+				return cmp.Compare(a.From, b.From)
+			})
+
+			for _, tier := range tiers {
+				if remainingUnits <= 0 {
+					break
+				}
+				// Open-ended tier
+				if tier.To == nil {
+					totalAmountInCents += remainingUnits * tier.Price
+					break
+				}
+				capacity := *tier.To - tier.From + 1
+				billableUnits := min(remainingUnits, capacity)
+				totalAmountInCents += billableUnits * tier.Price
+				remainingUnits -= billableUnits
+			}
+		default:
+			slog.Warn("unknown pricing model", "model", customer.PlanPricingModel)
 		}
 
 		var newPeriodStart pgtype.Timestamptz
