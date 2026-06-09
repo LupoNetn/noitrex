@@ -12,12 +12,14 @@ import (
 
 type Querier interface {
 	CreateCustomer(ctx context.Context, arg CreateCustomerParams) (Customer, error)
+	CreateDeliveryAttempt(ctx context.Context, arg CreateDeliveryAttemptParams) (WebhookDelivery, error)
 	CreateNewInvoice(ctx context.Context, arg CreateNewInvoiceParams) (Invoice, error)
 	CreateOperator(ctx context.Context, arg CreateOperatorParams) (Operator, error)
 	CreatePlan(ctx context.Context, arg CreatePlanParams) (Plan, error)
 	CreateUsageEvent(ctx context.Context, arg CreateUsageEventParams) (UsageEvent, error)
 	DeleteOperator(ctx context.Context, id pgtype.UUID) error
 	DeletePlan(ctx context.Context, id pgtype.UUID) error
+	GetActiveWebhooksByOperatorID(ctx context.Context, operatorID pgtype.UUID) (WebhookEndpoint, error)
 	GetCustomerByEmail(ctx context.Context, arg GetCustomerByEmailParams) (Customer, error)
 	GetCustomerByExternalID(ctx context.Context, arg GetCustomerByExternalIDParams) (Customer, error)
 	GetCustomerByID(ctx context.Context, id pgtype.UUID) (Customer, error)
@@ -40,6 +42,7 @@ type Querier interface {
 	ListUsageEventsByEventName(ctx context.Context, eventName string) ([]UsageEvent, error)
 	UpdateCustomerPeriodStart(ctx context.Context, arg UpdateCustomerPeriodStartParams) error
 	UpdateCustomerPlan(ctx context.Context, arg UpdateCustomerPlanParams) (Customer, error)
+	UpdateDeliveryResult(ctx context.Context, arg UpdateDeliveryResultParams) (WebhookDelivery, error)
 	UpdateInvoiceStatus(ctx context.Context, arg UpdateInvoiceStatusParams) (Invoice, error)
 	UpdateOperator(ctx context.Context, arg UpdateOperatorParams) (Operator, error)
 	UpdateOperatorStatus(ctx context.Context, arg UpdateOperatorStatusParams) error

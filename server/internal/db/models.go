@@ -266,6 +266,7 @@ type WebhookDelivery struct {
 	AttemptNumber int32              `json:"attempt_number"`
 	DeliveredAt   pgtype.Timestamptz `json:"delivered_at"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	Status        string             `json:"status"`
 }
 
 type WebhookEndpoint struct {

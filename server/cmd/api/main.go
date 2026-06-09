@@ -9,13 +9,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/luponetn/noitrex/internal/billing"
 	"github.com/luponetn/noitrex/internal/broker"
 	"github.com/luponetn/noitrex/internal/config"
 	"github.com/luponetn/noitrex/internal/db"
 	"github.com/luponetn/noitrex/internal/logger"
 	"github.com/luponetn/noitrex/internal/metering"
 	"github.com/luponetn/noitrex/internal/redis"
-	"github.com/luponetn/noitrex/internal/billing"
+	webhook "github.com/luponetn/noitrex/internal/webhooks"
 )
 
 type App struct {
@@ -51,14 +52,19 @@ func main() {
 	}
 	defer redisClient.Close()
 
-	meteringEngine := metering.NewMeteringEngine(broker, redisClient, queries)
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
+	meteringEngine := metering.NewMeteringEngine(broker, redisClient, queries)
 	go meteringEngine.Start(ctx)
 
 	billingEngine := billing.NewBilling(queries, broker)
 	go billingEngine.Start(ctx)
+
+	webhookCtx, webhookCancel := context.WithCancel(ctx)
+	defer webhookCancel()
+	webhookEngine := webhook.NewWebhookEngine(queries, broker)
+	go webhookEngine.Start(webhookCtx)
 
 	CreateRoutes(router, queries, cfg.JWTAccessSecret, cfg.JWTRefreshSecret, broker)
 
