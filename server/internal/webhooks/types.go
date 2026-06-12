@@ -40,3 +40,25 @@ type InvoiceLineItems struct {
 	PeriodEnd   string   `json:"period_end"`
 	Plan        string   `json:"plan"`
 }
+
+type PaginatedRequest struct {
+	Limit  int32 `form:"limit,default=10"`
+	Offset int32 `form:"offset,default=0"`
+}
+
+type PaginatedResponse struct {
+	Data       interface{} `json:"data"`
+	TotalCount int64       `json:"total_count"`
+	Limit      int32       `json:"limit"`
+	Offset     int32       `json:"offset"`
+}
+
+type UpdateEndpointUrlRequest struct {
+	URL string `json:"url" binding:"required,url"`
+}
+
+type WebhookDeliveryStatsResponse struct {
+	TotalDeliveries      int64 `json:"total_deliveries"`
+	SuccessfulDeliveries int64 `json:"successful_deliveries"`
+	FailedDeliveries     int64 `json:"failed_deliveries"`
+}

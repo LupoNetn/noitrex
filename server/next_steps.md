@@ -36,12 +36,12 @@
 - [x] Wire billing worker in main.go with a daily ticker
 
 ## Webhooks
-- [ ] Write webhook_endpoints migration
-- [ ] Write webhook_deliveries migration
-- [ ] Webhook dispatcher — subscribes to invoice.created
-- [ ] Webhook dispatcher — looks up operator's endpoints
-- [ ] Webhook dispatcher — calls NexusRelay to deliver
-- [ ] Webhook handler — POST /v1/webhooks/endpoints
+- [x] Write webhook_endpoints migration
+- [x] Write webhook_deliveries migration
+- [x] Webhook dispatcher — subscribes to invoice.created
+- [x] Webhook dispatcher — looks up operator's endpoints
+- [x] Webhook dispatcher — calls NexusRelay to deliver
+- [x] Webhook handler — POST /v1/webhooks/endpoints
 
 ## REST API Polish
 - [ ] GET /v1/customers/:id/invoices

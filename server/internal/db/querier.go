@@ -33,6 +33,7 @@ type Querier interface {
 	GetUsageEventByCustomerIDAndEventName(ctx context.Context, arg GetUsageEventByCustomerIDAndEventNameParams) (UsageEvent, error)
 	GetUsageEventByID(ctx context.Context, id pgtype.UUID) (UsageEvent, error)
 	GetUsageEventByIdempotencyKey(ctx context.Context, idempotencyKey string) (UsageEvent, error)
+	GetWebhookDeliveriesStats(ctx context.Context, operatorID pgtype.UUID) (GetWebhookDeliveriesStatsRow, error)
 	ListCustomers(ctx context.Context, operatorID pgtype.UUID) ([]Customer, error)
 	ListInvoicesByCustomer(ctx context.Context, customerID pgtype.UUID) ([]Invoice, error)
 	ListInvoicesByOperatorPaginated(ctx context.Context, arg ListInvoicesByOperatorPaginatedParams) ([]Invoice, error)
@@ -40,6 +41,7 @@ type Querier interface {
 	ListPlans(ctx context.Context, operatorID pgtype.UUID) ([]Plan, error)
 	ListUsageEventsByCustomerID(ctx context.Context, customerID pgtype.UUID) ([]UsageEvent, error)
 	ListUsageEventsByEventName(ctx context.Context, eventName string) ([]UsageEvent, error)
+	ListWebhookDeliveriesPaginated(ctx context.Context, arg ListWebhookDeliveriesPaginatedParams) ([]WebhookDelivery, error)
 	UpdateCustomerPeriodStart(ctx context.Context, arg UpdateCustomerPeriodStartParams) error
 	UpdateCustomerPlan(ctx context.Context, arg UpdateCustomerPlanParams) (Customer, error)
 	UpdateDeliveryResult(ctx context.Context, arg UpdateDeliveryResultParams) (WebhookDelivery, error)
@@ -47,6 +49,7 @@ type Querier interface {
 	UpdateOperator(ctx context.Context, arg UpdateOperatorParams) (Operator, error)
 	UpdateOperatorStatus(ctx context.Context, arg UpdateOperatorStatusParams) error
 	UpdatePlan(ctx context.Context, arg UpdatePlanParams) (Plan, error)
+	UpdateWebhookEndpointURL(ctx context.Context, arg UpdateWebhookEndpointURLParams) (WebhookEndpoint, error)
 	UpsertUsageAggregate(ctx context.Context, arg UpsertUsageAggregateParams) error
 }
 

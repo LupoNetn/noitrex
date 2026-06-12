@@ -20,6 +20,7 @@ import (
 	"github.com/luponetn/noitrex/internal/invoices"
 	operator "github.com/luponetn/noitrex/internal/operators"
 	"github.com/luponetn/noitrex/internal/plans"
+	"github.com/luponetn/noitrex/internal/webhooks"
 )
 
 func CreateRouter() *gin.Engine {
@@ -59,6 +60,10 @@ func CreateRoutes(router *gin.Engine, queries db.Querier, JWTAccessSecret, JWTRe
 	authService := auth.NewService(queries, JWTAccessSecret, JWTRefreshSecret)
 	authHandler := auth.NewHandler(authService)
 	auth.NewRouter(router, authHandler)
+
+	webhookService := webhook.NewService(queries)
+	webhookHandler := webhook.NewHandler(webhookService)
+	webhook.NewRouter(router, webhookHandler, JWTAccessSecret)
 }
 
 func StartupServer(router *gin.Engine, port string) error {

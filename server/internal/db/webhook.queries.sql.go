@@ -60,6 +60,75 @@ func (q *Queries) GetActiveWebhooksByOperatorID(ctx context.Context, operatorID 
 	return i, err
 }
 
+const getWebhookDeliveriesStats = `-- name: GetWebhookDeliveriesStats :one
+SELECT 
+    COUNT(d.id) as total_deliveries,
+    COALESCE(SUM(CASE WHEN d.status = 'delivered' THEN 1 ELSE 0 END), 0)::bigint as successful_deliveries,
+    COALESCE(SUM(CASE WHEN d.status = 'failed' THEN 1 ELSE 0 END), 0)::bigint as failed_deliveries
+FROM webhook_deliveries d
+JOIN webhook_endpoints e ON d.endpoint_id = e.id
+WHERE e.operator_id = $1
+`
+
+type GetWebhookDeliveriesStatsRow struct {
+	TotalDeliveries      int64 `json:"total_deliveries"`
+	SuccessfulDeliveries int64 `json:"successful_deliveries"`
+	FailedDeliveries     int64 `json:"failed_deliveries"`
+}
+
+func (q *Queries) GetWebhookDeliveriesStats(ctx context.Context, operatorID pgtype.UUID) (GetWebhookDeliveriesStatsRow, error) {
+	row := q.db.QueryRow(ctx, getWebhookDeliveriesStats, operatorID)
+	var i GetWebhookDeliveriesStatsRow
+	err := row.Scan(&i.TotalDeliveries, &i.SuccessfulDeliveries, &i.FailedDeliveries)
+	return i, err
+}
+
+const listWebhookDeliveriesPaginated = `-- name: ListWebhookDeliveriesPaginated :many
+SELECT d.id, d.endpoint_id, d.event_type, d.payload, d.response_code, d.response_body, d.attempt_number, d.delivered_at, d.created_at, d.status
+FROM webhook_deliveries d
+JOIN webhook_endpoints e ON d.endpoint_id = e.id
+WHERE e.operator_id = $1
+ORDER BY d.created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type ListWebhookDeliveriesPaginatedParams struct {
+	OperatorID pgtype.UUID `json:"operator_id"`
+	Limit      int32       `json:"limit"`
+	Offset     int32       `json:"offset"`
+}
+
+func (q *Queries) ListWebhookDeliveriesPaginated(ctx context.Context, arg ListWebhookDeliveriesPaginatedParams) ([]WebhookDelivery, error) {
+	rows, err := q.db.Query(ctx, listWebhookDeliveriesPaginated, arg.OperatorID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []WebhookDelivery
+	for rows.Next() {
+		var i WebhookDelivery
+		if err := rows.Scan(
+			&i.ID,
+			&i.EndpointID,
+			&i.EventType,
+			&i.Payload,
+			&i.ResponseCode,
+			&i.ResponseBody,
+			&i.AttemptNumber,
+			&i.DeliveredAt,
+			&i.CreatedAt,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateDeliveryResult = `-- name: UpdateDeliveryResult :one
 UPDATE webhook_deliveries 
 SET response_code = $1,
@@ -97,6 +166,33 @@ func (q *Queries) UpdateDeliveryResult(ctx context.Context, arg UpdateDeliveryRe
 		&i.DeliveredAt,
 		&i.CreatedAt,
 		&i.Status,
+	)
+	return i, err
+}
+
+const updateWebhookEndpointURL = `-- name: UpdateWebhookEndpointURL :one
+UPDATE webhook_endpoints
+SET url = $2
+WHERE operator_id = $1 AND active = true
+RETURNING id, operator_id, url, signing_secret, events, active, created_at
+`
+
+type UpdateWebhookEndpointURLParams struct {
+	OperatorID pgtype.UUID `json:"operator_id"`
+	Url        string      `json:"url"`
+}
+
+func (q *Queries) UpdateWebhookEndpointURL(ctx context.Context, arg UpdateWebhookEndpointURLParams) (WebhookEndpoint, error) {
+	row := q.db.QueryRow(ctx, updateWebhookEndpointURL, arg.OperatorID, arg.Url)
+	var i WebhookEndpoint
+	err := row.Scan(
+		&i.ID,
+		&i.OperatorID,
+		&i.Url,
+		&i.SigningSecret,
+		&i.Events,
+		&i.Active,
+		&i.CreatedAt,
 	)
 	return i, err
 }
