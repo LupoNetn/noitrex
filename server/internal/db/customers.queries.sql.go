@@ -11,6 +11,22 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countTotalNumberOfCustomerInvoice = `-- name: CountTotalNumberOfCustomerInvoice :one
+SELECT COUNT(*) FROM invoices WHERE operator_id = $1 AND customer_id = $2
+`
+
+type CountTotalNumberOfCustomerInvoiceParams struct {
+	OperatorID pgtype.UUID `json:"operator_id"`
+	CustomerID pgtype.UUID `json:"customer_id"`
+}
+
+func (q *Queries) CountTotalNumberOfCustomerInvoice(ctx context.Context, arg CountTotalNumberOfCustomerInvoiceParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countTotalNumberOfCustomerInvoice, arg.OperatorID, arg.CustomerID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createCustomer = `-- name: CreateCustomer :one
 INSERT INTO customers 
 (operator_id, external_id, plan_name, name, email)

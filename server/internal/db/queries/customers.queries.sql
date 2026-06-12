@@ -22,3 +22,6 @@ SELECT * FROM customers WHERE operator_id = $1 ORDER BY created_at DESC;
 -- name: GetCustomerInvoices :many
 SELECT * FROM invoices WHERE operator_id = $1 AND customer_id = $2
 LIMIT $3 OFFSET $4;
+
+-- name: CountTotalNumberOfCustomerInvoice :one
+SELECT COUNT(*) FROM invoices WHERE operator_id = $1 AND customer_id = $2;

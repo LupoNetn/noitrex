@@ -3,6 +3,8 @@ package customers
 import (
 	"errors"
 	"log/slog"
+	"math"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -238,6 +240,11 @@ func (h *Handler) GetCustomerInvoices(c *gin.Context) {
 		return
 	}
 
+	//retrieve pagination meta needed
+	page := queryInt(c, "page", 1)
+	pageSize := queryInt(c, "page_size", 10)
+	offset := (page - 1) * pageSize
+
 	operatorIDStr, exists := c.Get("operatorId")
 	if !exists {
 		slog.Error("Unauthorized request no operator id found")
@@ -251,9 +258,11 @@ func (h *Handler) GetCustomerInvoices(c *gin.Context) {
 		return
 	}
 
-	invoices, err := h.service.GetCustomerInvoices(c.Request.Context(), db.GetCustomerInvoicesParams{
+	invoices, count, err := h.service.GetCustomerInvoices(c.Request.Context(), db.GetCustomerInvoicesParams{
 		OperatorID: operatorID,
 		CustomerID: customerID,
+		Limit:      int32(pageSize),
+		Offset:     int32(offset),
 	})
 	if err != nil {
 		if errors.Is(err, ErrNoCustomerInvoiceFound) {
@@ -265,5 +274,25 @@ func (h *Handler) GetCustomerInvoices(c *gin.Context) {
 		return
 	}
 
-	utils.OK(c, invoices)
+	totalPages := int(math.Ceil(float64(count) / float64(pageSize)))
+
+	utils.OK(c, gin.H{
+		"data": invoices,
+		"meta": gin.H{
+			"total_number": count,
+			"page_size":    pageSize,
+			"page":         page,
+			"has_next":     page < totalPages,
+			"has_previous": page > 1,
+		},
+	})
+}
+
+// helper
+func queryInt(c *gin.Context, key string, defaultVal int) int {
+	v, err := strconv.Atoi(c.Query(key))
+	if err != nil || v <= 0 {
+		return defaultVal
+	}
+	return v
 }

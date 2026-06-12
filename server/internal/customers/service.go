@@ -3,6 +3,7 @@ package customers
 import (
 	"context"
 	"errors"
+	"log/slog"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -15,7 +16,7 @@ type Service interface {
 	GetCustomerByExternalID(ctx context.Context, operatorID pgtype.UUID, externalID pgtype.UUID) (db.Customer, error)
 	ListCustomers(ctx context.Context, operatorID pgtype.UUID) ([]db.Customer, error)
 	GetCustomerByEmail(ctx context.Context, email string, operatorID pgtype.UUID) (db.Customer, error)
-	GetCustomerInvoices(ctx context.Context, args db.GetCustomerInvoicesParams) ([]db.Invoice, error)
+	GetCustomerInvoices(ctx context.Context, args db.GetCustomerInvoicesParams) ([]db.Invoice, int64, error)
 }
 
 type Svc struct {
@@ -65,17 +66,29 @@ func (s *Svc) GetCustomerByEmail(ctx context.Context, email string, operatorID p
 	})
 }
 
-func (s *Svc) GetCustomerInvoices(ctx context.Context, args db.GetCustomerInvoicesParams) ([]db.Invoice, error) {
+func (s *Svc) GetCustomerInvoices(ctx context.Context, args db.GetCustomerInvoicesParams) ([]db.Invoice, int64, error) {
 	invoices, err := s.db.GetCustomerInvoices(ctx, db.GetCustomerInvoicesParams{
+		OperatorID: args.OperatorID,
+		CustomerID: args.CustomerID,
+		Limit:      args.Limit,
+		Offset:     args.Offset,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			slog.Error("no rows for customer invoice found")
+			return []db.Invoice{}, 0, ErrNoCustomerInvoiceFound
+		}
+		return []db.Invoice{}, 0, err
+	}
+
+	count, err := s.db.CountTotalNumberOfCustomerInvoice(ctx, db.CountTotalNumberOfCustomerInvoiceParams{
 		OperatorID: args.OperatorID,
 		CustomerID: args.CustomerID,
 	})
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return []db.Invoice{}, ErrNoCustomerInvoiceFound
-		}
-		return []db.Invoice{}, err
+		slog.Error("could not get invoice count", "error", err)
+		return []db.Invoice{}, 0, err
 	}
 
-	return invoices, nil
+	return invoices, count, nil
 }

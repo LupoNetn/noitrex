@@ -11,6 +11,7 @@ import (
 )
 
 type Querier interface {
+	CountTotalNumberOfCustomerInvoice(ctx context.Context, arg CountTotalNumberOfCustomerInvoiceParams) (int64, error)
 	CreateCustomer(ctx context.Context, arg CreateCustomerParams) (Customer, error)
 	CreateDeliveryAttempt(ctx context.Context, arg CreateDeliveryAttemptParams) (WebhookDelivery, error)
 	CreateNewInvoice(ctx context.Context, arg CreateNewInvoiceParams) (Invoice, error)
