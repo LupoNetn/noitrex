@@ -118,6 +118,53 @@ func (q *Queries) GetCustomerByID(ctx context.Context, id pgtype.UUID) (Customer
 	return i, err
 }
 
+const getCustomerInvoices = `-- name: GetCustomerInvoices :many
+SELECT id, operator_id, customer_id, amount_cents, status, period_start, period_end, line_items, created_at FROM invoices WHERE operator_id = $1 AND customer_id = $2
+LIMIT $3 OFFSET $4
+`
+
+type GetCustomerInvoicesParams struct {
+	OperatorID pgtype.UUID `json:"operator_id"`
+	CustomerID pgtype.UUID `json:"customer_id"`
+	Limit      int32       `json:"limit"`
+	Offset     int32       `json:"offset"`
+}
+
+func (q *Queries) GetCustomerInvoices(ctx context.Context, arg GetCustomerInvoicesParams) ([]Invoice, error) {
+	rows, err := q.db.Query(ctx, getCustomerInvoices,
+		arg.OperatorID,
+		arg.CustomerID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Invoice
+	for rows.Next() {
+		var i Invoice
+		if err := rows.Scan(
+			&i.ID,
+			&i.OperatorID,
+			&i.CustomerID,
+			&i.AmountCents,
+			&i.Status,
+			&i.PeriodStart,
+			&i.PeriodEnd,
+			&i.LineItems,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listCustomers = `-- name: ListCustomers :many
 SELECT id, operator_id, external_id, name, email, period_start, created_at, plan_name FROM customers WHERE operator_id = $1 ORDER BY created_at DESC
 `

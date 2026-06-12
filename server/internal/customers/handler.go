@@ -222,3 +222,48 @@ func (h *Handler) ListCustomers(c *gin.Context) {
 
 	utils.OK(c, responses)
 }
+
+func (h *Handler) GetCustomerInvoices(c *gin.Context) {
+	customerIDStr := c.Param("id")
+	if customerIDStr == "" {
+		slog.Error("No customer id, this is a bad request")
+		utils.BadRequest(c, "customer id required for this operation")
+		return
+	}
+
+	var customerID pgtype.UUID
+	if err := customerID.Scan(customerIDStr); err != nil {
+		slog.Error("invalid customer id, error parsing string")
+		utils.BadRequest(c, "invalid customer id")
+		return
+	}
+
+	operatorIDStr, exists := c.Get("operatorId")
+	if !exists {
+		slog.Error("Unauthorized request no operator id found")
+		utils.Unauthorized(c)
+		return
+	}
+	var operatorID pgtype.UUID
+	if err := operatorID.Scan(operatorIDStr); err != nil {
+		slog.Error("invalid customer id, error parsing string")
+		utils.BadRequest(c, "invalid customer id")
+		return
+	}
+
+	invoices, err := h.service.GetCustomerInvoices(c.Request.Context(), db.GetCustomerInvoicesParams{
+		OperatorID: operatorID,
+		CustomerID: customerID,
+	})
+	if err != nil {
+		if errors.Is(err, ErrNoCustomerInvoiceFound) {
+			utils.NotFound(c, "No invoices found for this customer")
+			return
+		}
+		slog.Error("failed to get customer invoices", slog.Any("error", err))
+		utils.InternalError(c)
+		return
+	}
+
+	utils.OK(c, invoices)
+}

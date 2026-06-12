@@ -23,6 +23,7 @@ type Querier interface {
 	GetCustomerByEmail(ctx context.Context, arg GetCustomerByEmailParams) (Customer, error)
 	GetCustomerByExternalID(ctx context.Context, arg GetCustomerByExternalIDParams) (Customer, error)
 	GetCustomerByID(ctx context.Context, id pgtype.UUID) (Customer, error)
+	GetCustomerInvoices(ctx context.Context, arg GetCustomerInvoicesParams) ([]Invoice, error)
 	GetCustomersDueForBillingWithoutInvoice(ctx context.Context) ([]GetCustomersDueForBillingWithoutInvoiceRow, error)
 	GetInvoiceByID(ctx context.Context, id pgtype.UUID) (Invoice, error)
 	GetOperator(ctx context.Context, id pgtype.UUID) (Operator, error)

@@ -15,6 +15,7 @@ type Service interface {
 	GetCustomerByExternalID(ctx context.Context, operatorID pgtype.UUID, externalID pgtype.UUID) (db.Customer, error)
 	ListCustomers(ctx context.Context, operatorID pgtype.UUID) ([]db.Customer, error)
 	GetCustomerByEmail(ctx context.Context, email string, operatorID pgtype.UUID) (db.Customer, error)
+	GetCustomerInvoices(ctx context.Context, args db.GetCustomerInvoicesParams) ([]db.Invoice, error)
 }
 
 type Svc struct {
@@ -62,4 +63,19 @@ func (s *Svc) GetCustomerByEmail(ctx context.Context, email string, operatorID p
 		OperatorID: operatorID,
 		Email:      email,
 	})
+}
+
+func (s *Svc) GetCustomerInvoices(ctx context.Context, args db.GetCustomerInvoicesParams) ([]db.Invoice, error) {
+	invoices, err := s.db.GetCustomerInvoices(ctx, db.GetCustomerInvoicesParams{
+		OperatorID: args.OperatorID,
+		CustomerID: args.CustomerID,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []db.Invoice{}, ErrNoCustomerInvoiceFound
+		}
+		return []db.Invoice{}, err
+	}
+
+	return invoices, nil
 }

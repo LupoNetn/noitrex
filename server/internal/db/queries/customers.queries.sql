@@ -18,3 +18,7 @@ UPDATE customers SET plan_name = $1, updated_at = NOW() WHERE operator_id = $2 A
 
 -- name: ListCustomers :many
 SELECT * FROM customers WHERE operator_id = $1 ORDER BY created_at DESC;
+
+-- name: GetCustomerInvoices :many
+SELECT * FROM invoices WHERE operator_id = $1 AND customer_id = $2
+LIMIT $3 OFFSET $4;

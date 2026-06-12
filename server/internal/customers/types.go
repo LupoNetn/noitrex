@@ -10,6 +10,7 @@ import (
 
 // Errors Both Sentinel and Custom error types
 var ErrCustomerNotFound = errors.New("customer not found")
+var ErrNoCustomerInvoiceFound = errors.New("there is no invoice for this customer")
 
 type CustomerAlreadyExists struct {
 	OperatorID string
